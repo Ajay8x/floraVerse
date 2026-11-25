@@ -1220,3 +1220,46 @@ kbd {
   border: none;
 }
 
+/* ========================================================
+   FULLSCREEN TOGGLE BUTTON
+   ======================================================== */
+.btn-fullscreen {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(13, 8, 22, 0.88);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-family: var(--font-code);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
+}
+
+.btn-fullscreen:hover {
+  background: rgba(0, 240, 255, 0.2);
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+}
+
+.btn-fullscreen:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 900px) {
+  .btn-fullscreen {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  .btn-fullscreen .fs-text {
+    display: none; /* Show full icon only on mobile for compact layout */
+  }
+}
+

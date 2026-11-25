@@ -2281,3 +2281,41 @@ if (typeof PIXI !== 'undefined') {
     console.log('Pixi init:', err);
   }
 }
+
+// ========================================================
+// 14. MOBILE & PC FULLSCREEN ENGINE
+// ========================================================
+const btnFullscreen = document.getElementById('btn-fullscreen-toggle');
+const fsIcon = document.getElementById('fullscreen-icon');
+
+function toggleFullScreen() {
+  const doc = window.document;
+  const docEl = doc.documentElement;
+
+  const requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+  const cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+  if (!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+    if (requestFullScreen) {
+      requestFullScreen.call(docEl);
+      if (fsIcon) fsIcon.className = 'fa-solid fa-compress';
+      showToast('📺 Fullscreen Mode Activated');
+    }
+  } else {
+    if (cancelFullScreen) {
+      cancelFullScreen.call(doc);
+      if (fsIcon) fsIcon.className = 'fa-solid fa-expand';
+      showToast('Fullscreen Mode Exited');
+    }
+  }
+}
+
+btnFullscreen?.addEventListener('click', toggleFullScreen);
+
+document.addEventListener('fullscreenchange', () => {
+  if (document.fullscreenElement) {
+    if (fsIcon) fsIcon.className = 'fa-solid fa-compress';
+  } else {
+    if (fsIcon) fsIcon.className = 'fa-solid fa-expand';
+  }
+});
