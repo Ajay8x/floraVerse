@@ -38,7 +38,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
 const orbitControls = new THREE.OrbitControls(camera, canvas);
 orbitControls.enableDamping = true;
 orbitControls.dampingFactor = 0.05;
-orbitControls.maxDistance = 450;
+orbitControls.maxDistance = 1200; // Expanded for vast multiverse exploration!
 orbitControls.minDistance = 1.0; // Macro zoom capability!
 orbitControls.target.set(0, 8, 0);
 
@@ -187,12 +187,11 @@ function createCelestialSky() {
 createCelestialSky();
 
 // ========================================================
-// 4. VAST ULTRA-DENSE BIOLUMINESCENT TERRAIN (180,000+ Points)
+// 4. VAST ULTRA-DENSE BIOLUMINESCENT TERRAIN (Expanded Multiverse Realm: 650m+)
 // ========================================================
 let terrainPointsMesh = null;
 function createVastTerrain() {
-  // Boosted from 45,000 to 180,000 high-density luminous ground pixels!
-  const count = 180000;
+  const count = 240000; // Ultra dense, massive open world
   const pos = new Float32Array(count * 3);
   const col = new Float32Array(count * 3);
 
@@ -200,39 +199,42 @@ function createVastTerrain() {
   const c2 = new THREE.Color(0x00f0ff); // Electric cyan
   const c3 = new THREE.Color(0x9d4edd); // Neon purple
   const c4 = new THREE.Color(0xff2a6d); // Rose glow veins
+  const c5 = new THREE.Color(0xffbe0b); // Golden solar frontier
 
   for (let i = 0; i < count; i++) {
-    // Dual layered distribution: dense inner carpet (80m) + vast outer horizon (250m)
-    const isInnerCarpet = (i % 2 === 0);
-    const maxR = isInnerCarpet ? 95 : 250;
-    const r = Math.pow(Math.random(), isInnerCarpet ? 0.5 : 0.75) * maxR;
+    // 3 Layers: Central Core (80m), Outer Biomes (250m), Multiverse Outer Rim (600m)
+    let maxR;
+    const tier = i % 3;
+    if (tier === 0) maxR = 90;
+    else if (tier === 1) maxR = 260;
+    else maxR = 620;
+
+    const r = Math.pow(Math.random(), 0.65) * maxR;
     const th = Math.random() * Math.PI * 2;
     const x = Math.cos(th) * r;
     const z = Math.sin(th) * r;
 
-    // Rich multi-harmonic organic hill waves
-    const y = Math.sin(x * 0.035) * Math.cos(z * 0.035) * 4.8
-            + Math.sin(x * 0.07 + z * 0.05) * 2.2
-            + Math.sin(x * 0.15) * 0.4 - 2.0;
+    const y = getTerrainHeightAt(x, z);
 
     pos[i * 3 + 0] = x;
     pos[i * 3 + 1] = y;
     pos[i * 3 + 2] = z;
 
-    // Color gradient with bioluminescent veins
-    const t = Math.min(1.0, r / 220);
+    // Rich color distribution matching biomes
+    const t = Math.min(1.0, r / 550);
     let color;
-    if (t < 0.3) {
-      color = c1.clone().lerp(c2, t / 0.3);
-    } else if (t < 0.7) {
-      color = c2.clone().lerp(c3, (t - 0.3) / 0.4);
+    if (t < 0.25) {
+      color = c1.clone().lerp(c2, t / 0.25);
+    } else if (t < 0.55) {
+      color = c2.clone().lerp(c3, (t - 0.25) / 0.3);
+    } else if (t < 0.8) {
+      color = c3.clone().lerp(c4, (t - 0.55) / 0.25);
     } else {
-      color = c3.clone().lerp(c4, (t - 0.7) / 0.3);
+      color = c4.clone().lerp(c5, (t - 0.8) / 0.2);
     }
 
-    // Sparkle energy nodes
     if (Math.random() > 0.88) {
-      color.addScalar(0.45);
+      color.addScalar(0.4);
     }
 
     col[i * 3 + 0] = color.r;
@@ -240,11 +242,65 @@ function createVastTerrain() {
     col[i * 3 + 2] = color.b;
   }
 
-  // Slightly finer point size (0.32) for ultra-dense velvet carpet appearance
-  terrainPointsMesh = createPoints(pos, col, 0.32, 0.85);
+  terrainPointsMesh = createPoints(pos, col, 0.34, 0.85);
   worldGroup.add(terrainPointsMesh);
 }
 createVastTerrain();
+
+// ========================================================
+// 4.5 LUMINOUS HIGHWAYS & MULTIVERSE PATHWAYS (Connected Roads)
+// ========================================================
+function createLuminousPathways() {
+  const roadWaypoints = [
+    // Central Rose -> Lotus Lake
+    { from: [0, 0], to: [55, 30], color: 0x00f0ff },
+    // Central Rose -> Sakura Tree
+    { from: [0, 0], to: [-60, -35], color: 0xff2a6d },
+    // Central Rose -> Sunflower Valley
+    { from: [0, 0], to: [65, -50], color: 0xffbe0b },
+    // Central Rose -> Monolith
+    { from: [0, 0], to: [0, -65], color: 0x9d4edd },
+    // Central Rose -> Tulip Plateau
+    { from: [0, 0], to: [-50, 40], color: 0x05ffa1 },
+    // Highway to Multiverse Realm 2 (Outer Cosmic Void)
+    { from: [55, 30], to: [200, 160], color: 0x00f0ff },
+    // Highway to Multiverse Realm 3 (Astral Cyber Mountain)
+    { from: [-60, -35], to: [-220, -180], color: 0xff2a6d },
+    // Highway to Multiverse Realm 4 (Golden Solar Expanse)
+    { from: [65, -50], to: [240, -210], color: 0xffbe0b }
+  ];
+
+  const totalPointsPerRoad = 1200;
+  roadWaypoints.forEach(rw => {
+    const pos = new Float32Array(totalPointsPerRoad * 3);
+    const col = new Float32Array(totalPointsPerRoad * 3);
+    const baseCol = new THREE.Color(rw.color);
+
+    for (let i = 0; i < totalPointsPerRoad; i++) {
+      const alpha = i / totalPointsPerRoad;
+      const rx = rw.from[0] + (rw.to[0] - rw.from[0]) * alpha;
+      const rz = rw.from[1] + (rw.to[1] - rw.from[1]) * alpha;
+      
+      // Road width dispersion (3.5 meters wide glowing trail)
+      const perpAngle = Math.atan2(rw.to[1] - rw.from[1], rw.to[0] - rw.from[0]) + Math.PI / 2;
+      const widthOffset = (Math.random() - 0.5) * 3.8;
+      const px = rx + Math.cos(perpAngle) * widthOffset;
+      const pz = rz + Math.sin(perpAngle) * widthOffset;
+      const py = getTerrainHeightAt(px, pz) + 0.12;
+
+      pos[i * 3 + 0] = px;
+      pos[i * 3 + 1] = py;
+      pos[i * 3 + 2] = pz;
+
+      const c = baseCol.clone().addScalar(Math.random() * 0.35);
+      col[i * 3 + 0] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+    }
+
+    const roadMesh = createPoints(pos, col, 0.42, 0.95);
+    worldGroup.add(roadMesh);
+  });
+}
+createLuminousPathways();
 
 // ========================================================
 // 5. LANDMARKS & PROCEDURAL ARCHITECTURE
@@ -740,6 +796,68 @@ spawnCrystalMonolith(0, -65);     // North Peak
 spawnTulipPlateau(-50, 40);       // Southwest Plateau
 
 // ========================================================
+// 5.1 MULTIVERSE REALM PORTALS (Outer Dimensional Gateways)
+// ========================================================
+function spawnMultiversePortal(x, z, realmId, realmName, realmColorHex, destX, destZ) {
+  const g = new THREE.Group();
+  const groundY = getTerrainHeightAt(x, z);
+  g.position.set(x, groundY, z);
+
+  // Outer Gateway Rings
+  const ringGeo = new THREE.TorusGeometry(8.5, 0.45, 16, 48);
+  const ringMat = new THREE.MeshBasicMaterial({ color: realmColorHex, wireframe: true });
+  const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+  ringMesh.position.y = 9;
+  ringMesh.name = 'portalRing';
+  g.add(ringMesh);
+
+  // Inner Swirling Event Horizon (Point Cloud Core)
+  const corePointsCount = 2800;
+  const pPos = new Float32Array(corePointsCount * 3);
+  const pCol = new Float32Array(corePointsCount * 3);
+  const c = new THREE.Color(realmColorHex);
+
+  for (let i = 0; i < corePointsCount; i++) {
+    const rad = Math.random() * 7.5;
+    const ang = Math.random() * Math.PI * 2;
+    pPos[i * 3 + 0] = Math.cos(ang) * rad;
+    pPos[i * 3 + 1] = 9 + Math.sin(ang) * rad;
+    pPos[i * 3 + 2] = (Math.random() - 0.5) * 1.5;
+
+    const col = c.clone().addScalar(Math.random() * 0.4);
+    pCol[i * 3 + 0] = col.r; pCol[i * 3 + 1] = col.g; pCol[i * 3 + 2] = col.b;
+  }
+  const portalCore = createPoints(pPos, pCol, 0.38, 0.95);
+  portalCore.name = 'portalCore';
+  g.add(portalCore);
+
+  g.userData = {
+    id: realmId,
+    entityId: `PORT-${realmId.toUpperCase()}`,
+    name: realmName,
+    species: 'Quantum Multiverse Gateway',
+    category: 'MULTIVERSE PORTAL GATEWAY',
+    luminosity: '250,000 LUX',
+    height: '18 METERS',
+    desc: `Step through the gateway to teleport across dimensions to (${destX}, ${destZ}).`,
+    camPos: { x: x + 18, y: groundY + 14, z: z + 24 },
+    lookAt: { x: x, y: groundY + 9, z: z },
+    teleportTarget: { x: destX, z: destZ }
+  };
+
+  g.add(create3DNameBadge(`PORT-${realmId.toUpperCase()}`, realmName, 20));
+  addLandmarkHitbox(g, 9, 22);
+
+  worldGroup.add(g);
+  landmarks.push(g);
+}
+
+// 3 Connected Multiverse Outer Realms
+spawnMultiversePortal(200, 160, 'realm_plasma', '⚡ Neo-Plasma Multiverse Frontier', 0x00f0ff, 0, 15);
+spawnMultiversePortal(-220, -180, 'realm_astral', '🌸 Astral Sakura Expanse', 0xff2a6d, -50, 40);
+spawnMultiversePortal(240, -210, 'realm_solaris', '☀️ Solaris Golden Nebula', 0xffbe0b, 65, -50);
+
+// ========================================================
 // FEATURE 1: 🦋 GLOWING 3D BUTTERFLIES (Reduced to 4 Gentle Butterflies)
 // ========================================================
 const butterflies = [];
@@ -949,7 +1067,8 @@ for (let i = 0; i < pollenCount; i++) {
   const c = new THREE.Color().setHSL(chosenHue, 0.95, 0.7);
   pCol[i * 3 + 0] = c.r; pCol[i * 3 + 1] = c.g; pCol[i * 3 + 2] = c.b;
 
-  pSpeed[i] = 0.08 + Math.random() * 0.12; // Natural varied upward velocity
+  // Gentle, calm upward velocity (slow floating drift)
+  pSpeed[i] = 0.025 + Math.random() * 0.035;
 }
 
 const pollenGeo = new THREE.BufferGeometry();
@@ -1574,6 +1693,12 @@ function animate() {
 
     const sp = lm.getObjectByName('spiral');
     if (sp) sp.rotation.y = tSpiral;
+
+    // Portal spin
+    const pr = lm.getObjectByName('portalRing');
+    if (pr) pr.rotation.z += 0.015;
+    const pc = lm.getObjectByName('portalCore');
+    if (pc) pc.rotation.z -= 0.025;
 
     const ring = lm.getObjectByName('ring');
     if (ring) {
