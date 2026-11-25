@@ -1,0 +1,1066 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+:root {
+  --bg-deep: #030108;
+  --panel-glass: rgba(13, 8, 22, 0.72);
+  --border-glass: rgba(255, 255, 255, 0.12);
+  --accent-cyan: #00f0ff;
+  --accent-rose: #ff2a6d;
+  --accent-gold: #ffbe0b;
+  --accent-purple: #9d4edd;
+  --accent-green: #05ffa1;
+  --font-main: 'Outfit', sans-serif;
+  --font-display: 'Orbitron', 'Rajdhani', sans-serif;
+  --font-code: 'Fira Code', monospace;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-deep);
+  font-family: var(--font-main);
+  color: #f0edf9;
+}
+
+#world-app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#metaverse-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 3D Interactive Cursor Hover Tooltip */
+.cursor-tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background: rgba(13, 8, 22, 0.92);
+  border: 1px solid #00f0ff;
+  border-radius: 12px;
+  padding: 8px 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 240, 255, 0.4);
+  transform: translate(24px, -50%); /* Appears immediately to the side of the cursor */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 160px;
+}
+
+.cursor-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(20px, -50%);
+}
+
+.tooltip-id {
+  font-family: var(--font-code);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-rose);
+  background: rgba(255, 42, 109, 0.15);
+  border: 1px solid rgba(255, 42, 109, 0.35);
+  padding: 1px 8px;
+  border-radius: 6px;
+  letter-spacing: 1px;
+}
+
+.tooltip-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.tooltip-hint {
+  font-size: 9px;
+  color: #9d96bb;
+  margin-top: 2px;
+}
+#crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 240, 255, 0.8);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
+  z-index: 25;
+  display: none;
+}
+
+#crosshair::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 2px;
+  background: #ffffff;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
+/* ========================================================
+   HUD: TOP BAR & TELEPORT DOCK (Compact Micro-Glass)
+======================================================== */
+.hud-top {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel-glass);
+  padding: 5px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: auto;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.brand-orb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 10px var(--accent-cyan);
+}
+
+.brand-info h1 {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brand-info h1 span {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.12);
+  padding: 1px 5px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.brand-info p {
+  display: none; /* Hide bulky subtitle for sleek view */
+}
+
+/* Warp Portals Dock (Sleek Micro Pills) */
+.teleport-dock {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--panel-glass);
+  padding: 4px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(14px);
+  pointer-events: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.teleport-dock::-webkit-scrollbar { display: none; }
+
+.dock-label {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #928ba8;
+  padding-left: 4px;
+  padding-right: 2px;
+  white-space: nowrap;
+}
+
+.portal-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #ddd9f3;
+  font-size: 9.5px;
+  font-weight: 600;
+  font-family: var(--font-main);
+  padding: 4px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.portal-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: var(--accent-cyan);
+}
+
+.portal-chip.active {
+  background: linear-gradient(135deg, rgba(255, 42, 109, 0.3), rgba(157, 78, 221, 0.3));
+  border-color: var(--accent-rose);
+  color: #fff;
+}
+
+/* Right Stats (Micro Badge) */
+.hud-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.stat-box {
+  background: var(--panel-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  padding: 3px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  backdrop-filter: blur(14px);
+}
+
+.stat-num {
+  font-family: var(--font-code);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.stat-lbl {
+  font-size: 7.5px;
+  color: #928ca9;
+}
+
+.icon-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--panel-glass);
+  border: 1px solid var(--border-glass);
+  color: #fff;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  transition: all 0.2s;
+}
+
+.icon-toggle:hover {
+  border-color: var(--accent-rose);
+  transform: scale(1.08);
+}
+
+.icon-toggle.active {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 14px var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.15);
+}
+
+/* ========================================================
+   HUD: RADAR MINIMAP (TOP RIGHT - Ultra Compact)
+======================================================== */
+.radar-container {
+  position: absolute;
+  top: 50px;
+  right: 14px;
+  width: 95px;
+  background: var(--panel-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  padding: 5px;
+  backdrop-filter: blur(14px);
+  z-index: 25;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.radar-header {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--accent-cyan);
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+#radar-canvas {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #0e0a1c 0%, #06030c 100%);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  display: block;
+  margin: 0 auto;
+}
+
+.radar-coords {
+  margin-top: 2px;
+  font-family: var(--font-code);
+  font-size: 7.5px;
+  text-align: center;
+  color: #b3aeca;
+}
+
+/* ========================================================
+   HUD: ULTRA-COMPACT BOTTOM FLOATING DOCK (Small & Unobtrusive)
+======================================================== */
+.hud-controls-card {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: var(--panel-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 30px;
+  padding: 6px 8px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 30;
+  width: auto !important;
+  max-width: none !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+.mode-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #dedaf1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-main);
+  white-space: nowrap;
+}
+
+.mode-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: var(--accent-cyan);
+  transform: translateY(-2px);
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(157, 78, 221, 0.25));
+  border-color: var(--accent-cyan);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+}
+
+.m-icon {
+  font-size: 14px;
+}
+
+/* Cut button for modes pill */
+.mode-cut-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #a49ec4;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+  transition: all 0.2s ease;
+}
+
+.mode-cut-btn:hover {
+  background: rgba(255, 42, 109, 0.4);
+  color: #fff;
+  border-color: var(--accent-rose);
+}
+
+.restore-hud-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: var(--panel-glass);
+  border: 1px solid var(--accent-cyan);
+  color: #00f0ff;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 30;
+  display: none;
+  backdrop-filter: blur(14px);
+}
+
+.restore-hud-btn.visible {
+  display: block;
+}
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 9px;
+  color: #9f99bc;
+}
+
+kbd {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: var(--font-code);
+  color: #fff;
+}
+
+/* ========================================================
+   FLOATING RIGHT TOOLBOX (Slim Vertical Micro Buttons)
+======================================================== */
+.floating-toolbox {
+  position: absolute;
+  right: 14px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 25;
+}
+
+.tool-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--panel-glass);
+  border: 1px solid var(--border-glass);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.t-emoji { font-size: 14px; }
+.t-tip { font-size: 7px; font-weight: 600; color: #a59fc4; }
+
+.tool-btn:hover {
+  background: rgba(45, 28, 70, 0.9);
+  border-color: var(--accent-rose);
+  transform: scale(1.08) translateX(-2px);
+  box-shadow: 0 6px 18px rgba(255, 42, 109, 0.35);
+}
+
+.tool-btn.active {
+  border-color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+}
+
+/* ========================================================
+   LANDMARK INSPECTION MINI-BAR (Ultra-Small Bottom Center Bar)
+======================================================== */
+.inspect-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  width: auto;
+  max-width: 90vw;
+  background: rgba(14, 8, 24, 0.92);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 30px;
+  padding: 6px 14px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 45;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.inspect-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.mini-inspect-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inspect-id-badge {
+  font-family: var(--font-code);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  padding: 2px 7px;
+  border-radius: 12px;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+#inspect-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.mini-spec {
+  font-size: 10px;
+  color: #9f99bc;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.mini-inspect-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-mini-zoom {
+  background: linear-gradient(135deg, var(--accent-rose), var(--accent-purple));
+  border: none;
+  color: #fff;
+  font-family: var(--font-main);
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(255, 42, 109, 0.35);
+}
+
+.btn-mini-zoom:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(255, 42, 109, 0.5);
+}
+
+.inspect-mini-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #c7c2dd;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.inspect-mini-close:hover {
+  background: rgba(255, 42, 109, 0.3);
+  color: #fff;
+  border-color: var(--accent-rose);
+}
+
+/* ========================================================
+   MODAL LOCK FOR FIRST PERSON
+======================================================== */
+.modal-lock {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(4, 2, 8, 0.82);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.modal-lock.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-box {
+  background: rgba(19, 12, 33, 0.95);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 22px;
+  padding: 32px 36px;
+  width: 480px;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 240, 255, 0.25);
+}
+
+.modal-icon { font-size: 40px; margin-bottom: 12px; }
+
+.modal-box h2 {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.modal-box p {
+  font-size: 12.5px;
+  color: #bcb6da;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.modal-keys {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 22px;
+  font-size: 11px;
+  color: #cfcaeb;
+}
+
+.btn-play {
+  width: 100%;
+  padding: 13px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #00f0ff, #7928ca);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  font-family: var(--font-main);
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 6px 25px rgba(0, 240, 255, 0.4);
+}
+
+.btn-play:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 35px rgba(0, 240, 255, 0.6);
+}
+
+.esc-note {
+  display: block;
+  margin-top: 12px;
+  font-size: 10px;
+  color: #8c86a5;
+}
+
+/* ========================================================
+   CODE DRAWER (WORLD MATRIX)
+======================================================== */
+.code-drawer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 38vh;
+  background: #14101e;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 60;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.code-drawer.collapsed {
+  transform: translateY(100%);
+}
+
+.drawer-header {
+  height: 36px;
+  background: #1b1627;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 12px;
+}
+
+.d-dots { display: flex; gap: 6px; }
+.d-dot { width: 11px; height: 11px; border-radius: 50%; cursor: pointer; }
+.d-dot.red { background: #ff5f56; }
+.d-dot.yellow { background: #ffbd2e; }
+.d-dot.green { background: #27c93f; }
+
+.d-tabs { display: flex; gap: 4px; flex: 1; }
+.d-tab {
+  font-size: 11px;
+  padding: 5px 12px;
+  background: #14101e;
+  color: #928ca9;
+  border-radius: 6px 6px 0 0;
+  font-family: var(--font-code);
+  cursor: pointer;
+}
+.d-tab.active { background: #1f192d; color: #fff; border-top: 2px solid var(--accent-cyan); }
+
+.btn-mini {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+
+.drawer-body {
+  flex: 1;
+  display: flex;
+  overflow-y: auto;
+  font-family: var(--font-code);
+  font-size: 12px;
+  background: #130f1c;
+}
+
+.d-lines {
+  width: 44px;
+  padding: 10px 10px 10px 0;
+  text-align: right;
+  color: #655f80;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.d-code {
+  flex: 1;
+  padding: 10px 16px;
+  overflow-x: auto;
+  color: #dfdaf5;
+  white-space: pre;
+}
+
+/* World Toast */
+.world-toast {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(18, 10, 28, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: #f0ecff;
+  font-size: 11.5px;
+  font-family: var(--font-code);
+  padding: 8px 22px;
+  border-radius: 20px;
+  backdrop-filter: blur(14px);
+  z-index: 55;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 30px rgba(0, 240, 255, 0.25);
+}
+
+.world-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ========================================================
+   PUBG MOBILE CONTROLS (Dual Thumbsticks & Touch Look)
+======================================================== */
+#mobile-controls-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 35;
+  display: none; /* Shown dynamically or on touch/mobile */
+}
+
+/* Left Movement Joystick */
+.joystick-zone {
+  position: absolute;
+  bottom: 25px;
+  left: 25px;
+  width: 140px;
+  height: 140px;
+  pointer-events: auto;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.joystick-base {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(0, 240, 255, 0.4);
+  backdrop-filter: blur(8px);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+.joystick-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #00f0ff 0%, #0077ff 100%);
+  border: 2px solid #ffffff;
+  position: absolute;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.8);
+  transform: translate(0, 0);
+  transition: transform 0.05s ease-out;
+  pointer-events: none;
+}
+
+/* Right Touch Look Zone (Drag finger to rotate camera like PUBG) */
+#touch-look-zone {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  width: 50vw;
+  height: calc(100vh - 140px);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* Right Action Buttons (PUBG Jump & Sprint) */
+.mobile-action-buttons {
+  position: absolute;
+  bottom: 30px;
+  right: 25px;
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.mobile-action-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(18, 12, 30, 0.85);
+  border: 2px solid rgba(255, 42, 109, 0.5);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 4px 15px rgba(255, 42, 109, 0.3);
+  transition: transform 0.1s, background 0.1s;
+}
+
+.mobile-action-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 42, 109, 0.4);
+}
+
+.mobile-action-btn span {
+  font-size: 16px;
+}
+
+.mobile-action-btn small {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #00f0ff;
+}
+
+.mobile-action-btn.sprint.active {
+  background: rgba(0, 240, 255, 0.35);
+  border-color: #00f0ff;
+}
+
+/* Enable on mobile touch or screens under 1024px */
+@media (max-width: 1024px), (pointer: coarse) {
+  #mobile-controls-layer {
+    display: block;
+  }
+}
+@media (max-width: 900px) {
+  .hud-top { flex-wrap: wrap; }
+  .teleport-dock { order: 3; width: 100%; }
+  .radar-container { display: none; }
+  .hud-controls-card {
+    bottom: 16px;
+    left: 12px;
+  }
+}
+
+/* ========================================================
+   10 LIBRARIES ENHANCEMENT STYLES
+   ======================================================== */
+#pixi-overlay-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.drone-pip-box {
+  position: absolute;
+  bottom: 80px;
+  right: 68px;
+  width: 240px;
+  height: 160px;
+  background: rgba(10, 6, 20, 0.92);
+  border: 1px solid #00f0ff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 240, 255, 0.35);
+  backdrop-filter: blur(12px);
+  z-index: 45;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.drone-pip-box.hidden {
+  display: none !important;
+}
+
+.drone-pip-header {
+  height: 28px;
+  background: rgba(0, 240, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-family: var(--font-code);
+  font-size: 10px;
+  font-weight: 700;
+  color: #00f0ff;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.drone-pip-close {
+  background: transparent;
+  border: none;
+  color: #ff2a6d;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#babylon-canvas {
+  width: 100%;
+  height: calc(100% - 28px);
+  display: block;
+}
+
+.spline-modal-box {
+  position: absolute;
+  top: 60px;
+  right: 68px;
+  width: 320px;
+  height: 280px;
+  background: rgba(13, 8, 24, 0.94);
+  border: 1px solid #9d4edd;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(157, 78, 221, 0.4);
+  backdrop-filter: blur(14px);
+  z-index: 50;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.spline-modal-box.hidden {
+  display: none !important;
+}
+
+.spline-modal-header {
+  height: 30px;
+  background: rgba(157, 78, 221, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-family: var(--font-code);
+  font-size: 11px;
+  font-weight: 700;
+  color: #ff2a6d;
+  border-bottom: 1px solid rgba(157, 78, 221, 0.35);
+}
+
+.spline-embed-wrapper {
+  width: 100%;
+  height: calc(100% - 30px);
+  position: relative;
+}
+
+.spline-embed-wrapper spline-viewer {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
