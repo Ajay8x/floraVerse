@@ -945,13 +945,169 @@ kbd {
     display: block;
   }
 }
+
+/* ========================================================
+   RESPONSIVE MOBILE VIEW ADJUSTMENTS (Smart Ergonomic Layout)
+   ======================================================== */
 @media (max-width: 900px) {
-  .hud-top { flex-wrap: wrap; }
-  .teleport-dock { order: 3; width: 100%; }
-  .radar-container { display: none; }
+  .hud-top {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    gap: 6px;
+  }
+
+  .hud-brand {
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+
+  .brand-info h1 {
+    font-size: 11px;
+    letter-spacing: 0.8px;
+  }
+
+  .brand-info h1 span {
+    font-size: 7px;
+    padding: 1px 3px;
+  }
+
+  .hud-stats {
+    gap: 4px;
+  }
+
+  .stat-box {
+    padding: 4px 8px;
+    min-width: auto;
+  }
+
+  .stat-num {
+    font-size: 11px;
+  }
+
+  .stat-lbl {
+    font-size: 7px;
+  }
+
+  /* Hide bulky background radar on smaller screens to free screen space */
+  .radar-container {
+    display: none;
+  }
+
+  /* Modes Dock: Centered and elevated so thumbs don't collide */
   .hud-controls-card {
-    bottom: 16px;
+    bottom: calc(150px + env(safe-area-inset-bottom, 0px));
     left: 12px;
+    z-index: 40;
+  }
+
+  .mode-buttons {
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .mode-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .restore-hud-btn {
+    bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    z-index: 40;
+  }
+
+  /* Move floating toolbox higher up on the right so it doesn't overlap Jump/Sprint buttons */
+  .floating-toolbox {
+    right: 10px;
+    bottom: calc(130px + env(safe-area-inset-bottom, 0px));
+    gap: 4px;
+    z-index: 30;
+  }
+
+  .tool-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  .t-emoji {
+    font-size: 12px;
+  }
+
+  .t-tip {
+    display: none; /* Hide micro text labels on mobile to keep icons clean */
+  }
+
+  /* Joystick: Ergonomic bottom-left touch zone */
+  .joystick-zone {
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    left: 16px;
+    width: 120px;
+    height: 120px;
+  }
+
+  .joystick-base {
+    width: 95px;
+    height: 95px;
+  }
+
+  .joystick-thumb {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* PUBG Mobile Jump & Sprint Buttons: Bottom-right thumb zone */
+  .mobile-action-buttons {
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    right: 16px;
+    gap: 10px;
+  }
+
+  .mobile-action-btn {
+    width: 50px;
+    height: 50px;
+  }
+
+  .mobile-action-btn span {
+    font-size: 14px;
+  }
+
+  .mobile-action-btn small {
+    font-size: 7.5px;
+  }
+
+  /* Full screen touch look area without obstructing buttons */
+  #touch-look-zone {
+    top: 50px;
+    right: 0;
+    width: 60vw;
+    height: calc(100vh - 120px);
+  }
+
+  /* Inspection card: Responsive centered bottom pill */
+  .inspect-overlay {
+    bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    max-width: 90vw;
+    padding: 6px 12px;
+  }
+
+  /* Drone & Spline Popups on mobile: Scaled down */
+  .drone-pip-box {
+    right: 10px;
+    bottom: calc(130px + env(safe-area-inset-bottom, 0px));
+    width: 190px;
+    height: 130px;
+  }
+
+  .spline-modal-box {
+    right: 10px;
+    top: 55px;
+    width: calc(100vw - 20px);
+    max-width: 320px;
+    height: 240px;
   }
 }
 
