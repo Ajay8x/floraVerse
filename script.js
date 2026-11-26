@@ -19,7 +19,8 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x06030c, 0.008);
 
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
-camera.position.set(0, 35, 95);
+// Default Camera: Bird's-eye Top-Down View displaying Central Rose & 4 Surrounding Monumental Flowers
+camera.position.set(0, 115, 0.1);
 
 const renderer = new THREE.WebGLRenderer({
   canvas: canvas,
@@ -40,7 +41,7 @@ orbitControls.enableDamping = true;
 orbitControls.dampingFactor = 0.05;
 orbitControls.maxDistance = 1200; // Expanded for vast multiverse exploration!
 orbitControls.minDistance = 1.0; // Macro zoom capability!
-orbitControls.target.set(0, 8, 0);
+orbitControls.target.set(0, 0, 0); // Focus directly at Earth-1 Core Center
 
 // B. First Person PointerLock Controls (Walking Mode)
 const fpControls = new THREE.PointerLockControls(camera, document.body);
@@ -4077,8 +4078,8 @@ document.addEventListener('fullscreenchange', () => {
 const earthRealms = {
   '1': {
     name: 'Earth-1: Central Core',
-    camPos: { x: 0, y: 45, z: 110 },
-    lookAt: { x: 0, y: 8, z: 0 },
+    camPos: { x: 0, y: 115, z: 0.1 },
+    lookAt: { x: 0, y: 0, z: 0 },
     playerSpawn: { x: 0, z: 15 },
     fogColor: 0x06030c,
     lightColor: 0x9d4edd,
