@@ -263,16 +263,17 @@ createVastTerrain();
 // (Connecting Central Earth-1 to North, South, West, East Earths)
 // ========================================================
 const gateVortices = [];
+const allGates = []; // Holds references to all 8 Gates for Realm-specific Visibility
 function createLuminousPathways() {
   const connections = [
     // North Road to Earth-2
-    { from: [0, 68], to: [0, 180], color: 0x00f0ff, gateAt: [0, 68], gateRot: 0 },
+    { id: '2', from: [0, 68], to: [0, 180], color: 0x00f0ff, gateAt: [0, 68], gateRot: 0 },
     // South Road to Earth-3
-    { from: [0, -68], to: [0, -180], color: 0xff2a6d, gateAt: [0, -68], gateRot: Math.PI },
+    { id: '3', from: [0, -68], to: [0, -180], color: 0xff2a6d, gateAt: [0, -68], gateRot: Math.PI },
     // West Road to Earth-4
-    { from: [-68, 0], to: [-190, 0], color: 0xffbe0b, gateAt: [-68, 0], gateRot: Math.PI / 2 },
+    { id: '4', from: [-68, 0], to: [-190, 0], color: 0xffbe0b, gateAt: [-68, 0], gateRot: Math.PI / 2 },
     // East Road to Earth-5
-    { from: [68, 0], to: [190, 0], color: 0x9d4edd, gateAt: [68, 0], gateRot: -Math.PI / 2 }
+    { id: '5', from: [68, 0], to: [190, 0], color: 0x9d4edd, gateAt: [68, 0], gateRot: -Math.PI / 2 }
   ];
 
   connections.forEach(conn => {
@@ -328,10 +329,11 @@ function createLuminousPathways() {
     });
 
     // 2. Cyberpunk Entry Gate (Archway Gate at Central Earth-1 road entrance)
-    function buildGate(gx, gz, gRot, gColor) {
+    function buildGate(gx, gz, gRot, gColor, realmOrigin) {
       const gateGroup = new THREE.Group();
       gateGroup.position.set(gx, -2.0, gz);
       gateGroup.rotation.y = gRot;
+      gateGroup.userData = { realm: realmOrigin, gx, gz };
 
       const pillarGeo = new THREE.BoxGeometry(1.6, 9.5, 1.6);
       const pillarMat = new THREE.MeshStandardMaterial({
@@ -381,14 +383,15 @@ function createLuminousPathways() {
       gateGroup.add(vortex);
 
       gateVortices.push(vortex);
+      allGates.push(gateGroup);
       worldGroup.add(gateGroup);
     }
 
-    // Departure Gate from Central Earth-1
-    buildGate(conn.gateAt[0], conn.gateAt[1], conn.gateRot, conn.color);
+    // Departure Gate from Central Earth-1 (Located on Earth-1)
+    buildGate(conn.gateAt[0], conn.gateAt[1], conn.gateRot, conn.color, '1');
 
-    // Return Gate from Outer Earth (Facing backwards to return to Earth-1)
-    buildGate(conn.to[0], conn.to[1], conn.gateRot + Math.PI, conn.color);
+    // Return Gate from Outer Earth (Located on Outer Earth: 2, 3, 4, 5)
+    buildGate(conn.to[0], conn.to[1], conn.gateRot + Math.PI, conn.color, conn.id);
   });
 }
 createLuminousPathways();
@@ -3051,6 +3054,34 @@ function animate() {
   for (let g = 0; g < gateVortices.length; g++) {
     gateVortices[g].rotation.z += delta * 2.2;
     gateVortices[g].scale.setScalar(1.0 + Math.sin(time * 3 + g) * 0.08);
+  }
+
+  // 🚪 Dynamic Gate Realm Visibility: Show ONLY the gate of the current world where player stands
+  // If player is on Earth-1: Show only Earth-1 departure gates.
+  // If player is on Earth-2/3/4/5: Show only that specific outer Earth's return gate (hide all other gates).
+  // If in Auto-run on highway: keep both origin and destination gates visible during transition.
+  if (allGates.length > 0) {
+    const px = playerGroup.position.x;
+    const pz = playerGroup.position.z;
+    let currentStandingRealm = '1';
+
+    if (Math.hypot(px - 0, pz - 240) < 95) currentStandingRealm = '2'; // North Earth-2
+    else if (Math.hypot(px - 0, pz - (-240)) < 95) currentStandingRealm = '3'; // South Earth-3
+    else if (Math.hypot(px - (-250), pz - 0) < 95) currentStandingRealm = '4'; // West Earth-4
+    else if (Math.hypot(px - 250, pz - 0) < 95) currentStandingRealm = '5'; // East Earth-5
+    else currentStandingRealm = '1'; // Central Earth-1
+
+    for (let i = 0; i < allGates.length; i++) {
+      const g = allGates[i];
+      const gateRealm = g.userData.realm;
+      if (isAutoRunningOnHighway) {
+        // While auto-running between realms, show the relevant transit gates
+        g.visible = (gateRealm === '1' || gateRealm === autoRunEarthId);
+      } else {
+        // When standing in a world, ONLY show gates belonging to that world!
+        g.visible = (gateRealm === currentStandingRealm);
+      }
+    }
   }
 
   // 🌸 Feature 3 Animation: Falling Sakura Petals & Swirling Leaves on Earth-3
