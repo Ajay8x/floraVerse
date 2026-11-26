@@ -1518,7 +1518,7 @@ let playerRotationY = 0;
 let playerPitch = 0; // Camera vertical look angle
 
 // ========================================================
-// 5.6 EARTH-3 SAKURA FAUNA & DIVERSE COSTUMED NPCS
+// 5.6 EARTH-3 SAKURA FAUNA & DIVERSE COSTUMED NPCS (MASTERCLASS EDITION)
 // ========================================================
 const earth3NPCs = [];
 const earth3Animals = [];
@@ -1528,6 +1528,7 @@ const npcCostumes = [
   {
     name: 'Veer Vikram',
     title: 'Sakura Cyber Yoddha',
+    classRole: 'samurai',
     armorCol: 0x240046, // Deep Violet Armor
     trimCol: 0xff007f,  // Neon Magenta
     visorCol: 0x00f0ff, // Aqua Visor
@@ -1539,6 +1540,7 @@ const npcCostumes = [
   {
     name: 'Ananya',
     title: 'Vanaspati Vaigyanik',
+    classRole: 'botanist',
     armorCol: 0x0d3b66, // Cobalt Navy
     trimCol: 0x06d6a0,  // Mint Emerald
     visorCol: 0x52b788, // Emerald HUD
@@ -1550,6 +1552,7 @@ const npcCostumes = [
   {
     name: 'Rishi Vashistha',
     title: 'Brahmaand Mahaguru',
+    classRole: 'sage',
     armorCol: 0x1a1a24, // Midnight Obsidian
     trimCol: 0xffd166,  // Gold Inlays
     visorCol: 0xffd166, // Golden Visor
@@ -1561,16 +1564,19 @@ const npcCostumes = [
   {
     name: 'Aarav',
     title: 'Nakshatra Khoji',
+    classRole: 'ranger',
     armorCol: 0x2b2d42, // Matte Charcoal
     trimCol: 0xff5400,  // Solar Flame Orange
     visorCol: 0xff0054, // Ruby Visor
     capeCol: 0x9e0059,
+    coreCol: 0xff5400,
     hasCape: false,
     scale: 0.98
   },
   {
     name: 'Ranveer',
     title: 'Maharakshak Vanguard',
+    classRole: 'vanguard',
     armorCol: 0x0a1128, // Deep Abyssal Blue
     trimCol: 0x00b4d8,  // Cyan Plasma
     visorCol: 0x90e0ef, // Ice Cyan
@@ -1581,18 +1587,55 @@ const npcCostumes = [
   }
 ];
 
+// Helper to generate floating holographic billboard nameplate for each NPC
+function createNPCNameSprite(name, title, colorHex) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 160;
+  const ctx = canvas.getContext('2d');
+
+  // Background Glass Pill
+  ctx.fillStyle = 'rgba(10, 6, 20, 0.88)';
+  ctx.strokeStyle = `#${colorHex.toString(16).padStart(6, '0')}`;
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.roundRect(16, 16, 480, 128, 30);
+  ctx.fill();
+  ctx.stroke();
+
+  // Name Text
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 44px Orbitron, Rajdhani, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(name, 256, 70);
+
+  // Subtitle / Role Text
+  ctx.fillStyle = `#${colorHex.toString(16).padStart(6, '0')}`;
+  ctx.font = 'bold 26px Fira Code, monospace';
+  ctx.fillText(`◆ ${title.toUpperCase()} ◆`, 256, 114);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(4.8, 1.5, 1);
+  return sprite;
+}
+
 function createEarth3NPC(config, baseX, baseZ) {
   const npcGroup = new THREE.Group();
+  npcGroup.userData = { name: config.name, title: config.title };
 
   const npcArmorMat = new THREE.MeshStandardMaterial({
     color: config.armorCol,
-    metalness: 0.85,
-    roughness: 0.2,
+    metalness: 0.88,
+    roughness: 0.18,
     emissive: config.armorCol,
-    emissiveIntensity: 0.3
+    emissiveIntensity: 0.35
   });
   const trimMat = new THREE.MeshBasicMaterial({ color: config.trimCol });
   const visorMat = new THREE.MeshBasicMaterial({ color: config.visorCol });
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xffd166, metalness: 0.9, roughness: 0.15 });
 
   // 1. Torso
   const torso = new THREE.Group();
@@ -1606,7 +1649,7 @@ function createEarth3NPC(config, baseX, baseZ) {
   core.position.set(0, 3.7 * config.scale, 0.8 * config.scale);
   torso.add(core);
 
-  // Optional Cyber Cape / Haori Coat
+  // Cyber Cape / Haori Coat
   if (config.hasCape) {
     const capeGeo = new THREE.PlaneGeometry(2.2 * config.scale, 3.8 * config.scale);
     const capeMat = new THREE.MeshStandardMaterial({
@@ -1632,10 +1675,36 @@ function createEarth3NPC(config, baseX, baseZ) {
   visor.position.set(0, 0.08 * config.scale, -0.6 * config.scale);
   head.add(visor);
 
-  // Crest / Antenna
-  const crest = new THREE.Mesh(new THREE.ConeGeometry(0.35 * config.scale, 0.9 * config.scale, 4), trimMat);
-  crest.position.set(0, 0.9 * config.scale, 0);
-  head.add(crest);
+  // Unique Head Crests for each class
+  if (config.classRole === 'samurai') {
+    // Crescent Moon Kabuto Horns
+    const hornL = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.18, 1.4 * config.scale, 8), trimMat);
+    hornL.position.set(-0.6 * config.scale, 1.1 * config.scale, -0.2);
+    hornL.rotation.z = -0.55;
+    const hornR = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.18, 1.4 * config.scale, 8), trimMat);
+    hornR.position.set(0.6 * config.scale, 1.1 * config.scale, -0.2);
+    hornR.rotation.z = 0.55;
+    head.add(hornL);
+    head.add(hornR);
+  } else if (config.classRole === 'sage') {
+    // Sage Halo / Diadem Crown
+    const haloGeo = new THREE.TorusGeometry(0.9 * config.scale, 0.08, 8, 24);
+    const halo = new THREE.Mesh(haloGeo, goldMat);
+    halo.rotation.x = Math.PI / 2;
+    halo.position.set(0, 1.1 * config.scale, 0);
+    head.add(halo);
+  } else if (config.classRole === 'vanguard') {
+    // Heavy Armor Triple Crest
+    const vCrest = new THREE.Mesh(new THREE.BoxGeometry(0.3 * config.scale, 0.9 * config.scale, 1.6 * config.scale), trimMat);
+    vCrest.position.set(0, 0.95 * config.scale, 0);
+    head.add(vCrest);
+  } else {
+    // Scout Antenna / Sensor Mast
+    const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.08, 1.2 * config.scale, 6), trimMat);
+    ant.position.set(0.6 * config.scale, 1.0 * config.scale, -0.2);
+    ant.rotation.z = -0.2;
+    head.add(ant);
+  }
   torso.add(head);
 
   // 3. Arms
@@ -1652,6 +1721,123 @@ function createEarth3NPC(config, baseX, baseZ) {
   rArmMesh.position.y = -0.9 * config.scale;
   rArm.add(rArmMesh);
   torso.add(rArm);
+
+  // ========================================================
+  // SPECIALIZED ROLE WEAPONS & ACCESSORIES (Features 1 to 5)
+  // ========================================================
+  let specialProp = null;
+
+  if (config.classRole === 'samurai') {
+    // 1. Veer Vikram: Cyber Katana (Back Sheath + Glowing Blade)
+    const katanaGroup = new THREE.Group();
+    katanaGroup.position.set(-0.7 * config.scale, 3.2 * config.scale, -0.9 * config.scale);
+    katanaGroup.rotation.z = -0.65;
+
+    const scabbard = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.2, 0.12), npcArmorMat);
+    katanaGroup.add(scabbard);
+    const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.0, 8), trimMat);
+    hilt.position.y = 2.0;
+    katanaGroup.add(hilt);
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.35), goldMat);
+    guard.position.y = 1.5;
+    katanaGroup.add(guard);
+
+    torso.add(katanaGroup);
+    specialProp = katanaGroup;
+  } else if (config.classRole === 'botanist') {
+    // 2. Ananya: Levitating Botanical Scanning Drone + Holographic Tablet
+    const droneGroup = new THREE.Group();
+    droneGroup.position.set(1.6 * config.scale, 5.2 * config.scale, 0.6 * config.scale);
+
+    const droneCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.35 * config.scale), trimMat);
+    droneGroup.add(droneCore);
+
+    const droneRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.55 * config.scale, 0.05, 8, 24),
+      new THREE.MeshBasicMaterial({ color: 0x00f0ff })
+    );
+    droneGroup.add(droneRing);
+    torso.add(droneGroup);
+    specialProp = droneGroup;
+
+    // Handheld Data Pad in Left Arm
+    const tablet = new THREE.Mesh(
+      new THREE.BoxGeometry(0.6 * config.scale, 0.05, 0.9 * config.scale),
+      new THREE.MeshBasicMaterial({ color: 0x52b788 })
+    );
+    tablet.position.set(0, -1.9 * config.scale, 0.4 * config.scale);
+    tablet.rotation.x = -0.6;
+    lArm.add(tablet);
+  } else if (config.classRole === 'sage') {
+    // 3. Rishi Vashistha: Ancient Aetheric Energy Staff with Spinning Orbital Gem
+    const staffGroup = new THREE.Group();
+    staffGroup.position.set(0.3 * config.scale, -1.2 * config.scale, 0.2 * config.scale);
+
+    const staffShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 6.2 * config.scale, 8), goldMat);
+    staffShaft.position.y = 1.8 * config.scale;
+    staffGroup.add(staffShaft);
+
+    // Floating gem on staff top
+    const gem = new THREE.Mesh(new THREE.IcosahedronGeometry(0.45 * config.scale), trimMat);
+    gem.position.y = 5.0 * config.scale;
+    staffGroup.add(gem);
+
+    const orbitRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.75 * config.scale, 0.04, 6, 24),
+      new THREE.MeshBasicMaterial({ color: 0xff0055 })
+    );
+    orbitRing.position.y = 5.0 * config.scale;
+    staffGroup.add(orbitRing);
+
+    rArm.add(staffGroup);
+    specialProp = orbitRing;
+  } else if (config.classRole === 'ranger') {
+    // 4. Aarav: High-Frequency Energy Wings / Thrusters & Pulse Carbine
+    const wingsGroup = new THREE.Group();
+    wingsGroup.position.set(0, 3.8 * config.scale, -0.85 * config.scale);
+
+    const wingL = new THREE.Mesh(new THREE.BoxGeometry(2.4 * config.scale, 0.3 * config.scale, 0.08), trimMat);
+    wingL.position.set(-1.4 * config.scale, 0.6 * config.scale, 0);
+    wingL.rotation.z = -0.35;
+    const wingR = new THREE.Mesh(new THREE.BoxGeometry(2.4 * config.scale, 0.3 * config.scale, 0.08), trimMat);
+    wingR.position.set(1.4 * config.scale, 0.6 * config.scale, 0);
+    wingR.rotation.z = 0.35;
+    wingsGroup.add(wingL);
+    wingsGroup.add(wingR);
+
+    torso.add(wingsGroup);
+    specialProp = wingsGroup;
+  } else if (config.classRole === 'vanguard') {
+    // 5. Ranveer: Massive Energy Tower Shield & Dual Shoulder Cannons
+    const shieldGroup = new THREE.Group();
+    shieldGroup.position.set(-0.4 * config.scale, -1.0 * config.scale, 0.5 * config.scale);
+
+    const shieldMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(1.6 * config.scale, 4.2 * config.scale, 0.18),
+      new THREE.MeshStandardMaterial({ color: 0x0077b6, metalness: 0.9, roughness: 0.15 })
+    );
+    shieldGroup.add(shieldMesh);
+
+    const shieldNeonCross = new THREE.Mesh(
+      new THREE.BoxGeometry(1.3 * config.scale, 3.8 * config.scale, 0.22),
+      trimMat
+    );
+    shieldGroup.add(shieldNeonCross);
+    lArm.add(shieldGroup);
+
+    // Shoulder Heavy Plasma Cannons
+    const cannonL = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 1.4 * config.scale, 8), npcArmorMat);
+    cannonL.rotation.x = Math.PI / 2;
+    cannonL.position.set(-1.3 * config.scale, 5.0 * config.scale, 0);
+    torso.add(cannonL);
+
+    const cannonR = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 1.4 * config.scale, 8), npcArmorMat);
+    cannonR.rotation.x = Math.PI / 2;
+    cannonR.position.set(1.3 * config.scale, 5.0 * config.scale, 0);
+    torso.add(cannonR);
+
+    specialProp = shieldGroup;
+  }
 
   npcGroup.add(torso);
 
@@ -1670,7 +1856,7 @@ function createEarth3NPC(config, baseX, baseZ) {
   rLeg.add(rLegMesh);
   npcGroup.add(rLeg);
 
-  // Feet Neon Ring
+  // 5. Feet Neon Ring
   const footRing = new THREE.Mesh(
     new THREE.RingGeometry(1.4 * config.scale, 2.0 * config.scale, 24),
     new THREE.MeshBasicMaterial({ color: config.trimCol, side: THREE.DoubleSide, transparent: true, opacity: 0.55 })
@@ -1678,6 +1864,11 @@ function createEarth3NPC(config, baseX, baseZ) {
   footRing.rotation.x = Math.PI / 2;
   footRing.position.y = 0.05;
   npcGroup.add(footRing);
+
+  // 6. Overhead Holographic Nameplate (Visible from Distance)
+  const nameplate = createNPCNameSprite(config.name, config.title, config.trimCol);
+  nameplate.position.set(0, 6.8 * config.scale, 0);
+  npcGroup.add(nameplate);
 
   // Initial Grounding
   const groundY = getTerrainHeightAt(baseX, baseZ);
@@ -1688,17 +1879,22 @@ function createEarth3NPC(config, baseX, baseZ) {
 
   earth3NPCs.push({
     group: npcGroup,
+    config,
     torso,
+    head,
     lArm,
     rArm,
     lLeg,
     rLeg,
+    specialProp,
+    nameplate,
     baseX,
     baseZ,
-    wanderRadius: 10 + Math.random() * 8,
-    speed: 0.6 + Math.random() * 0.5,
+    wanderRadius: 9 + Math.random() * 6,
+    speed: 0.55 + Math.random() * 0.45,
     angle: Math.random() * Math.PI * 2,
-    idlePhase: Math.random() * 10
+    idlePhase: Math.random() * 10,
+    isLookingAtPlayer: false
   });
 }
 
@@ -2937,27 +3133,69 @@ function animate() {
   // 🌸 Earth-3 Costumed NPCs Animations (Gentle Wandering, Arm Swing, Cape flutter & Breathing)
   for (let i = 0; i < earth3NPCs.length; i++) {
     const npc = earth3NPCs[i];
-    npc.angle += delta * npc.speed * 0.2;
-    const targetX = npc.baseX + Math.cos(npc.angle) * npc.wanderRadius;
-    const targetZ = npc.baseZ + Math.sin(npc.angle) * npc.wanderRadius;
 
-    // Movement direction and facing
-    const moveDx = targetX - npc.group.position.x;
-    const moveDz = targetZ - npc.group.position.z;
-    const faceAngle = Math.atan2(moveDx, moveDz);
+    // Check distance to player for interactive Head / Body Tracking
+    const distToPlayer = playerGroup.position.distanceTo(npc.group.position);
 
-    npc.group.position.x = targetX;
-    npc.group.position.z = targetZ;
-    npc.group.position.y = getTerrainHeightAt(targetX, targetZ);
-    npc.group.rotation.y = faceAngle + Math.PI;
+    if (distToPlayer < 7.5) {
+      // NPC stops walking and turns to face the approaching player warmly
+      const lookDx = playerGroup.position.x - npc.group.position.x;
+      const lookDz = playerGroup.position.z - npc.group.position.z;
+      const lookAngle = Math.atan2(lookDx, lookDz);
+      npc.group.rotation.y = THREE.MathUtils.lerp(npc.group.rotation.y, lookAngle + Math.PI, 0.08);
 
-    // Limb swing
-    const npcWalkTime = time * 5.0 + npc.idlePhase;
-    npc.lLeg.rotation.x = Math.sin(npcWalkTime) * 0.45;
-    npc.rLeg.rotation.x = -Math.sin(npcWalkTime) * 0.45;
-    npc.lArm.rotation.x = -Math.sin(npcWalkTime) * 0.4;
-    npc.rArm.rotation.x = Math.sin(npcWalkTime) * 0.4;
-    npc.torso.position.y = Math.sin(time * 2.0 + npc.idlePhase) * 0.08;
+      // Relax limbs into respectful greeting/listening pose
+      npc.lLeg.rotation.x = THREE.MathUtils.lerp(npc.lLeg.rotation.x, 0, 0.1);
+      npc.rLeg.rotation.x = THREE.MathUtils.lerp(npc.rLeg.rotation.x, 0, 0.1);
+      npc.lArm.rotation.x = THREE.MathUtils.lerp(npc.lArm.rotation.x, 0, 0.1);
+      npc.rArm.rotation.x = THREE.MathUtils.lerp(npc.rArm.rotation.x, 0, 0.1);
+
+      // Gentle breathing bob
+      npc.torso.position.y = Math.sin(time * 2.2 + npc.idlePhase) * 0.06;
+    } else {
+      // Standard gentle wander patrol
+      npc.angle += delta * npc.speed * 0.2;
+      const targetX = npc.baseX + Math.cos(npc.angle) * npc.wanderRadius;
+      const targetZ = npc.baseZ + Math.sin(npc.angle) * npc.wanderRadius;
+
+      // Movement direction and facing
+      const moveDx = targetX - npc.group.position.x;
+      const moveDz = targetZ - npc.group.position.z;
+      const faceAngle = Math.atan2(moveDx, moveDz);
+
+      npc.group.position.x = targetX;
+      npc.group.position.z = targetZ;
+      npc.group.position.y = getTerrainHeightAt(targetX, targetZ);
+      npc.group.rotation.y = faceAngle + Math.PI;
+
+      // Limb swing
+      const npcWalkTime = time * 5.0 + npc.idlePhase;
+      npc.lLeg.rotation.x = Math.sin(npcWalkTime) * 0.45;
+      npc.rLeg.rotation.x = -Math.sin(npcWalkTime) * 0.45;
+      npc.lArm.rotation.x = -Math.sin(npcWalkTime) * 0.4;
+      npc.rArm.rotation.x = Math.sin(npcWalkTime) * 0.4;
+      npc.torso.position.y = Math.sin(time * 2.0 + npc.idlePhase) * 0.08;
+    }
+
+    // Role-specific dynamic animations for props & accessories
+    if (npc.specialProp) {
+      if (npc.config.classRole === 'botanist') {
+        // Drone bobbing & orbital spin
+        npc.specialProp.position.y = (5.2 + Math.sin(time * 3 + i) * 0.3) * npc.config.scale;
+        npc.specialProp.rotation.y += delta * 2.5;
+      } else if (npc.config.classRole === 'sage') {
+        // Floating gem & glowing ring rotation
+        npc.specialProp.rotation.x += delta * 3.0;
+        npc.specialProp.rotation.y += delta * 2.0;
+      } else if (npc.config.classRole === 'ranger') {
+        // Wings gentle pulse
+        npc.specialProp.children[0].rotation.z = -0.35 + Math.sin(time * 3) * 0.1;
+        npc.specialProp.children[1].rotation.z = 0.35 - Math.sin(time * 3) * 0.1;
+      } else if (npc.config.classRole === 'vanguard') {
+        // Shield gentle breathing tilt
+        npc.specialProp.rotation.y = Math.sin(time * 1.8 + i) * 0.08;
+      }
+    }
 
     // Cape flutter
     if (npc.torso.userData.cape) {
