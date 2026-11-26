@@ -55,7 +55,27 @@ const dirLight = new THREE.DirectionalLight(0xff2a6d, 1.2);
 dirLight.position.set(50, 100, 50);
 scene.add(dirLight);
 
-// Particle Glow Canvas Texture
+// ========================================================
+// 1.5 UNREAL BLOOM POST-PROCESSING ENGINE (Cinematic Neon Glow)
+// ========================================================
+let composer = null;
+try {
+  if (typeof THREE.EffectComposer !== 'undefined' && typeof THREE.UnrealBloomPass !== 'undefined') {
+    const renderScene = new THREE.RenderPass(scene, camera);
+    const bloomPass = new THREE.UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      0.35, // Significantly reduced bloom intensity (gentle soft glow)
+      0.25, // Smaller glow radius so it does not overwhelm the screen
+      0.65  // Higher threshold so only ultra-bright points have subtle shine
+    );
+
+    composer = new THREE.EffectComposer(renderer);
+    composer.addPass(renderScene);
+    composer.addPass(bloomPass);
+  }
+} catch (e) {
+  console.log('Post-processing init fallback:', e);
+}
 function createGlowTexture() {
   const s = 64;
   const c = document.createElement('canvas');
@@ -306,60 +326,52 @@ function createLuminousPathways() {
       worldGroup.add(createPoints(rPos, rCol, 0.55, 1.0));
     });
 
-    // 2. Cyberpunk Entry Gate (Archway Gate at the road entrance)
-    const gateGroup = new THREE.Group();
-    gateGroup.position.set(conn.gateAt[0], -2.0, conn.gateAt[1]);
-    gateGroup.rotation.y = conn.gateRot;
+    // 2. Cyberpunk Entry Gate (Archway Gate at Central Earth-1 road entrance)
+    function buildGate(gx, gz, gRot, gColor) {
+      const gateGroup = new THREE.Group();
+      gateGroup.position.set(gx, -2.0, gz);
+      gateGroup.rotation.y = gRot;
 
-    // Gate Pillars
-    const pillarGeo = new THREE.BoxGeometry(1.6, 9.5, 1.6);
-    const pillarMat = new THREE.MeshStandardMaterial({
-      color: 0x0a1020,
-      metalness: 0.9,
-      roughness: 0.15,
-      emissive: 0x020815
-    });
+      const pillarGeo = new THREE.BoxGeometry(1.6, 9.5, 1.6);
+      const pillarMat = new THREE.MeshStandardMaterial({
+        color: 0x0a1020, metalness: 0.9, roughness: 0.15, emissive: 0x020815
+      });
+      const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
+      leftPillar.position.set(-4.5, 4.75, 0);
+      gateGroup.add(leftPillar);
 
-    const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
-    leftPillar.position.set(-4.5, 4.75, 0);
-    gateGroup.add(leftPillar);
+      const rightPillar = new THREE.Mesh(pillarGeo, pillarMat);
+      rightPillar.position.set(4.5, 4.75, 0);
+      gateGroup.add(rightPillar);
 
-    const rightPillar = new THREE.Mesh(pillarGeo, pillarMat);
-    rightPillar.position.set(4.5, 4.75, 0);
-    gateGroup.add(rightPillar);
+      const beamGeo = new THREE.BoxGeometry(11.0, 1.8, 1.8);
+      const beamMat = new THREE.MeshStandardMaterial({
+        color: 0x0a1020, metalness: 0.9, roughness: 0.15, emissive: 0x020815
+      });
+      const topBeam = new THREE.Mesh(beamGeo, beamMat);
+      topBeam.position.set(0, 9.5, 0);
+      gateGroup.add(topBeam);
 
-    // Gate Luminous Top Beam
-    const beamGeo = new THREE.BoxGeometry(11.0, 1.8, 1.8);
-    const beamMat = new THREE.MeshStandardMaterial({
-      color: 0x0a1020,
-      metalness: 0.9,
-      roughness: 0.15,
-      emissive: 0x020815
-    });
-    const topBeam = new THREE.Mesh(beamGeo, beamMat);
-    topBeam.position.set(0, 9.5, 0);
-    gateGroup.add(topBeam);
+      const gateEdgeMat = new THREE.LineBasicMaterial({ color: gColor, linewidth: 3 });
+      topBeam.add(new THREE.LineSegments(new THREE.EdgesGeometry(beamGeo), gateEdgeMat));
+      leftPillar.add(new THREE.LineSegments(new THREE.EdgesGeometry(pillarGeo), gateEdgeMat));
+      rightPillar.add(new THREE.LineSegments(new THREE.EdgesGeometry(pillarGeo), gateEdgeMat));
 
-    // Glowing Neon Portal Arch Edges
-    const gateEdgeMat = new THREE.LineBasicMaterial({ color: conn.color, linewidth: 3 });
-    const bLines = new THREE.LineSegments(new THREE.EdgesGeometry(beamGeo), gateEdgeMat);
-    topBeam.add(bLines);
-    leftPillar.add(new THREE.LineSegments(new THREE.EdgesGeometry(pillarGeo), gateEdgeMat));
-    rightPillar.add(new THREE.LineSegments(new THREE.EdgesGeometry(pillarGeo), gateEdgeMat));
+      const shieldGeo = new THREE.PlaneGeometry(8.0, 8.5);
+      const shieldMat = new THREE.MeshBasicMaterial({
+        color: gColor, transparent: true, opacity: 0.35, side: THREE.DoubleSide
+      });
+      const shield = new THREE.Mesh(shieldGeo, shieldMat);
+      shield.position.set(0, 4.75, 0);
+      gateGroup.add(shield);
+      worldGroup.add(gateGroup);
+    }
 
-    // Luminous Energy Gateway Shield inside arch
-    const shieldGeo = new THREE.PlaneGeometry(8.0, 8.5);
-    const shieldMat = new THREE.MeshBasicMaterial({
-      color: conn.color,
-      transparent: true,
-      opacity: 0.3,
-      side: THREE.DoubleSide
-    });
-    const shield = new THREE.Mesh(shieldGeo, shieldMat);
-    shield.position.set(0, 4.75, 0);
-    gateGroup.add(shield);
+    // Departure Gate from Central Earth-1
+    buildGate(conn.gateAt[0], conn.gateAt[1], conn.gateRot, conn.color);
 
-    worldGroup.add(gateGroup);
+    // Return Gate from Outer Earth (Facing backwards to return to Earth-1)
+    buildGate(conn.to[0], conn.to[1], conn.gateRot + Math.PI, conn.color);
   });
 }
 createLuminousPathways();
@@ -1400,37 +1412,76 @@ const pollenMesh = new THREE.Points(pollenGeo, new THREE.PointsMaterial({
 worldGroup.add(pollenMesh);
 
 // ========================================================
-// 5.5 PLAYER CHARACTER (3D CYBER MECHA AVATAR BOX - ENLARGED)
+// 5.5 ANIMATED 3D CYBER HUMANOID AVATAR (Full Mecha Body with Head, Torso, Arms & Legs)
 // ========================================================
 const playerGroup = new THREE.Group();
 
-// Main body box (Larger, more heroic mecha proportions: 3.2m wide, 4.8m tall, 2.4m deep)
-const bodyGeo = new THREE.BoxGeometry(3.2, 4.8, 2.4);
-const bodyMat = new THREE.MeshStandardMaterial({
-  color: 0x0e1726,
-  metalness: 0.85,
+// Dark Cyber Armor Material
+const armorMat = new THREE.MeshStandardMaterial({
+  color: 0x0c1220,
+  metalness: 0.88,
   roughness: 0.18,
   emissive: 0x050f1f,
   emissiveIntensity: 0.5
 });
-const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-bodyMesh.position.y = 2.4;
-playerGroup.add(bodyMesh);
+const neonCyanMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+const neonPinkMat = new THREE.MeshBasicMaterial({ color: 0xff2a6d });
 
-// Glowing Neon Edges
-const edgeGeo = new THREE.EdgesGeometry(bodyGeo);
-const edgeMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, linewidth: 3 });
-const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
-bodyMesh.add(edgeLines);
+// 1. Torso / Chest
+const torsoGroup = new THREE.Group();
+const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.6, 1.6), armorMat);
+chestMesh.position.y = 3.6;
+torsoGroup.add(chestMesh);
 
-// Cyber Visor / Head indicator (Shows facing direction like PUBG)
-const visorGeo = new THREE.BoxGeometry(2.2, 0.85, 0.8);
-const visorMat = new THREE.MeshBasicMaterial({ color: 0xff2a6d });
-const visorMesh = new THREE.Mesh(visorGeo, visorMat);
-visorMesh.position.set(0, 3.6, -1.25); // Facing front (-Z)
-playerGroup.add(visorMesh);
+// Torso neon power core
+const coreMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.4, 16), neonCyanMat);
+coreMesh.rotation.x = Math.PI / 2;
+coreMesh.position.set(0, 3.8, 0.85);
+torsoGroup.add(coreMesh);
 
-// Soft shadow/beacon ring beneath player
+// 2. Cyber Head & Holographic Visor
+const headGroup = new THREE.Group();
+headGroup.position.set(0, 5.2, 0);
+const headMesh = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.4, 1.4), armorMat);
+headGroup.add(headMesh);
+const visorMesh = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.45, 0.6), neonPinkMat);
+visorMesh.position.set(0, 0.1, -0.6);
+headGroup.add(visorMesh);
+torsoGroup.add(headGroup);
+
+// 3. Articulated Arms (Left & Right Shoulders)
+const leftArmGroup = new THREE.Group();
+leftArmGroup.position.set(-1.6, 4.6, 0);
+const leftArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 2.4, 0.8), armorMat);
+leftArmMesh.position.y = -1.0;
+leftArmGroup.add(leftArmMesh);
+torsoGroup.add(leftArmGroup);
+
+const rightArmGroup = new THREE.Group();
+rightArmGroup.position.set(1.6, 4.6, 0);
+const rightArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 2.4, 0.8), armorMat);
+rightArmMesh.position.y = -1.0;
+rightArmGroup.add(rightArmMesh);
+torsoGroup.add(rightArmGroup);
+
+playerGroup.add(torsoGroup);
+
+// 4. Articulated Legs (Left & Right Hips for Walking/Running)
+const leftLegGroup = new THREE.Group();
+leftLegGroup.position.set(-0.7, 2.4, 0);
+const leftLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.4, 0.95), armorMat);
+leftLegMesh.position.y = -1.2;
+leftLegGroup.add(leftLegMesh);
+playerGroup.add(leftLegGroup);
+
+const rightLegGroup = new THREE.Group();
+rightLegGroup.position.set(0.7, 2.4, 0);
+const rightLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.4, 0.95), armorMat);
+rightLegMesh.position.y = -1.2;
+rightLegGroup.add(rightLegMesh);
+playerGroup.add(rightLegGroup);
+
+// 5. Glowing Shadow / Beacon Ring beneath feet
 const ringGeo = new THREE.RingGeometry(1.6, 2.4, 32);
 const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.65 });
 const ringMesh = new THREE.Mesh(ringGeo, ringMat);
@@ -1447,6 +1498,12 @@ let playerRotationY = 0;
 let playerPitch = 0; // Camera vertical look angle
 let joystickMove = { x: 0, y: 0 }; // Touch joystick inputs (-1 to +1)
 const velocity = { x: 0, y: 0, z: 0 };
+
+// Auto-Run Highway Travel State (Triggered upon passing through gates)
+let isAutoRunningOnHighway = false;
+let autoRunTarget = null;
+let autoRunEarthId = null;
+let autoRunSpeed = 32.0; // Comfortable, smooth jogging pace along cosmic highway
 
 // ========================================================
 // 6. WALKING ENGINE (KEYBOARD + MOUSE & PUBG TOUCH THUMBSTICKS)
@@ -1961,6 +2018,102 @@ function animate() {
 
   // Mode Logic
   if (currentMode === 'walk') {
+    // 0. AUTO-RUN HIGHWAY SPRINT ENGINE (When passing through Gates onto Roads)
+    if (isAutoRunningOnHighway && autoRunTarget) {
+      const dx = autoRunTarget.x - playerGroup.position.x;
+      const dz = autoRunTarget.z - playerGroup.position.z;
+      const distToDestination = Math.hypot(dx, dz);
+
+      if (distToDestination > 4.0) {
+        const roadAngle = Math.atan2(dx, dz);
+        playerGroup.position.x += Math.sin(roadAngle) * autoRunSpeed * delta;
+        playerGroup.position.z += Math.cos(roadAngle) * autoRunSpeed * delta;
+        playerGroup.rotation.y = THREE.MathUtils.lerp(playerGroup.rotation.y, roadAngle + Math.PI, 0.25);
+        playerRotationY = THREE.MathUtils.lerp(playerRotationY, roadAngle, 0.15);
+
+        // Smooth running limb animation
+        const runTime = time * 13.0;
+        leftLegGroup.rotation.x = Math.sin(runTime) * 0.8;
+        rightLegGroup.rotation.x = -Math.sin(runTime) * 0.8;
+        leftArmGroup.rotation.x = -Math.sin(runTime) * 0.7;
+        rightArmGroup.rotation.x = Math.sin(runTime) * 0.7;
+        torsoGroup.position.y = Math.abs(Math.sin(runTime * 2)) * 0.25;
+      } else {
+        // Arrived at destination world!
+        isAutoRunningOnHighway = false;
+        autoRunTarget = null;
+        if (autoRunEarthId) {
+          switchEarthRealm(autoRunEarthId);
+          showToast(`⚡ Welcome to ${earthRealms[autoRunEarthId].name}!`);
+        }
+      }
+    } else {
+      // Gate Detection: Check if player walks near any of the 4 Gateways
+      const px = playerGroup.position.x;
+      const pz = playerGroup.position.z;
+
+      // 1. North Gate (Z: ~68, X: ~0) -> Auto-Run North to Earth-2
+      if (Math.hypot(px - 0, pz - 68) < 6.5 && (keys.forward || joystickMove.y < -0.2)) {
+        isAutoRunningOnHighway = true;
+        autoRunTarget = { x: 0, z: 240 };
+        autoRunEarthId = '2';
+        showToast('🚀 North Cyber Gate Engaged: Highway Auto-Sprint to Earth-2!');
+      }
+      // 2. South Gate (Z: ~-68, X: ~0) -> Auto-Run South to Earth-3
+      else if (Math.hypot(px - 0, pz - (-68)) < 6.5 && (keys.forward || joystickMove.y > 0.2 || keys.backward)) {
+        isAutoRunningOnHighway = true;
+        autoRunTarget = { x: 0, z: -240 };
+        autoRunEarthId = '3';
+        showToast('🚀 South Cyber Gate Engaged: Highway Auto-Sprint to Earth-3!');
+      }
+      // 3. West Gate (X: ~-68, Z: ~0) -> Auto-Run West to Earth-4
+      else if (Math.hypot(px - (-68), pz - 0) < 6.5) {
+        isAutoRunningOnHighway = true;
+        autoRunTarget = { x: -250, z: 0 };
+        autoRunEarthId = '4';
+        showToast('🚀 West Cyber Gate Engaged: Highway Auto-Sprint to Earth-4!');
+      }
+      // 4. East Gate (X: ~68, Z: ~0) -> Auto-Run East to Earth-5
+      else if (Math.hypot(px - 68, pz - 0) < 6.5) {
+        isAutoRunningOnHighway = true;
+        autoRunTarget = { x: 250, z: 0 };
+        autoRunEarthId = '5';
+        showToast('🚀 East Cyber Gate Engaged: Highway Auto-Sprint to Earth-5!');
+      }
+
+      // ==========================================
+      // RETURN GATES: Auto-Run Back to Central Earth-1
+      // ==========================================
+      // Return Gate from Earth-2 North (Z: ~180, X: ~0)
+      else if (Math.hypot(px - 0, pz - 180) < 6.5) {
+        isAutoRunningOnHighway = true;
+        autoRunTarget = { x: 0, z: 15 };
+        autoRunEarthId = '1';
+        showToast('🔄 Return Gate Engaged: Auto-Sprinting Back to Central Earth-1!');
+      }
+      // Return Gate from Earth-3 South (Z: ~-180, X: ~0)
+      else if (Math.hypot(px - 0, pz - (-180)) < 6.5) {
+        isAutoRunningOnHighway = true;
+        autoRunTarget = { x: 0, z: -15 };
+        autoRunEarthId = '1';
+        showToast('🔄 Return Gate Engaged: Auto-Sprinting Back to Central Earth-1!');
+      }
+      // Return Gate from Earth-4 West (X: ~-190, Z: ~0)
+      else if (Math.hypot(px - (-190), pz - 0) < 6.5) {
+        isAutoRunningOnHighway = true;
+        autoRunTarget = { x: -15, z: 0 };
+        autoRunEarthId = '1';
+        showToast('🔄 Return Gate Engaged: Auto-Sprinting Back to Central Earth-1!');
+      }
+      // Return Gate from Earth-5 East (X: ~190, Z: ~0)
+      else if (Math.hypot(px - 190, pz - 0) < 6.5) {
+        isAutoRunningOnHighway = true;
+        autoRunTarget = { x: 15, z: 0 };
+        autoRunEarthId = '1';
+        showToast('🔄 Return Gate Engaged: Auto-Sprinting Back to Central Earth-1!');
+      }
+    }
+
     // 1. Calculate inputs from Keyboard (PC) or Joystick (Mobile)
     let moveForward = 0;
     let moveRight = 0;
@@ -2020,6 +2173,27 @@ function animate() {
     const camTargetX = playerGroup.position.x + Math.sin(playerRotationY) * cameraDistance;
     const camTargetZ = playerGroup.position.z + Math.cos(playerRotationY) * cameraDistance;
     const camTargetY = playerGroup.position.y + cameraHeight;
+
+    // Articulated Humanoid Walk / Run Animation
+    let walkCycleSpeed = (keys.sprint ? 14.0 : 8.5);
+    if (inputLen > 0.1) {
+      const walkTime = time * walkCycleSpeed;
+      // Leg swing (alternating)
+      leftLegGroup.rotation.x = Math.sin(walkTime) * 0.7;
+      rightLegGroup.rotation.x = -Math.sin(walkTime) * 0.7;
+      // Arm swing (opposing legs)
+      leftArmGroup.rotation.x = -Math.sin(walkTime) * 0.6;
+      rightArmGroup.rotation.x = Math.sin(walkTime) * 0.6;
+      // Torso natural vertical bounce
+      torsoGroup.position.y = Math.abs(Math.sin(walkTime * 2)) * 0.25;
+    } else {
+      // Idle breathing stance
+      leftLegGroup.rotation.x = THREE.MathUtils.lerp(leftLegGroup.rotation.x, 0, 0.15);
+      rightLegGroup.rotation.x = THREE.MathUtils.lerp(rightLegGroup.rotation.x, 0, 0.15);
+      leftArmGroup.rotation.x = THREE.MathUtils.lerp(leftArmGroup.rotation.x, 0, 0.15);
+      rightArmGroup.rotation.x = THREE.MathUtils.lerp(rightArmGroup.rotation.x, 0, 0.15);
+      torsoGroup.position.y = Math.sin(time * 2.5) * 0.1; // Gentle breathing bob
+    }
 
     // Smooth camera chase
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, camTargetX, 0.15);
@@ -2147,7 +2321,11 @@ function animate() {
     updateRadar();
   }
 
-  renderer.render(scene, camera);
+  if (composer) {
+    composer.render();
+  } else {
+    renderer.render(scene, camera);
+  }
 }
 
 animate();
@@ -2157,6 +2335,7 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  if (composer) composer.setSize(window.innerWidth, window.innerHeight);
 });
 
 // ========================================================
