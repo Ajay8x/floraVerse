@@ -1496,6 +1496,505 @@ worldGroup.add(playerGroup);
 // Player state
 let playerRotationY = 0;
 let playerPitch = 0; // Camera vertical look angle
+
+// ========================================================
+// 5.6 EARTH-3 SAKURA FAUNA & DIVERSE COSTUMED NPCS
+// ========================================================
+const earth3NPCs = [];
+const earth3Animals = [];
+
+// NPC Costumes with Distinct Armor Colors, Visors & Capes/Accents
+const npcCostumes = [
+  {
+    name: 'Ronin Kaelen',
+    title: 'Sakura Cyber Samurai',
+    armorCol: 0x240046, // Deep Violet Armor
+    trimCol: 0xff007f,  // Neon Magenta
+    visorCol: 0x00f0ff, // Aqua Visor
+    capeCol: 0x7209b7,  // Cyber Kimono / Haori
+    coreCol: 0xff0055,
+    hasCape: true,
+    scale: 1.05
+  },
+  {
+    name: 'Botanist Aya',
+    title: 'Quantum Arborist',
+    armorCol: 0x0d3b66, // Cobalt Navy
+    trimCol: 0x06d6a0,  // Mint Emerald
+    visorCol: 0x52b788, // Emerald HUD
+    capeCol: 0x118ab2,
+    coreCol: 0x06d6a0,
+    hasCape: false,
+    scale: 0.95
+  },
+  {
+    name: 'Grand Sage Ren',
+    title: 'Aether Elder',
+    armorCol: 0x1a1a24, // Midnight Obsidian
+    trimCol: 0xffd166,  // Gold Inlays
+    visorCol: 0xffd166, // Golden Visor
+    capeCol: 0xd90429,  // Crimson Silk Cape
+    coreCol: 0xffbe0b,
+    hasCape: true,
+    scale: 1.12
+  },
+  {
+    name: 'Scout Maya',
+    title: 'Neon Ranger',
+    armorCol: 0x2b2d42, // Matte Charcoal
+    trimCol: 0xff5400,  // Solar Flame Orange
+    visorCol: 0xff0054, // Ruby Visor
+    capeCol: 0x9e0059,
+    hasCape: false,
+    scale: 0.98
+  },
+  {
+    name: 'Guardian Jin',
+    title: 'Heavy Mecha Vanguard',
+    armorCol: 0x0a1128, // Deep Abyssal Blue
+    trimCol: 0x00b4d8,  // Cyan Plasma
+    visorCol: 0x90e0ef, // Ice Cyan
+    capeCol: 0x0077b6,
+    coreCol: 0x00f0ff,
+    hasCape: true,
+    scale: 1.2
+  }
+];
+
+function createEarth3NPC(config, baseX, baseZ) {
+  const npcGroup = new THREE.Group();
+
+  const npcArmorMat = new THREE.MeshStandardMaterial({
+    color: config.armorCol,
+    metalness: 0.85,
+    roughness: 0.2,
+    emissive: config.armorCol,
+    emissiveIntensity: 0.3
+  });
+  const trimMat = new THREE.MeshBasicMaterial({ color: config.trimCol });
+  const visorMat = new THREE.MeshBasicMaterial({ color: config.visorCol });
+
+  // 1. Torso
+  const torso = new THREE.Group();
+  const chest = new THREE.Mesh(new THREE.BoxGeometry(2.3 * config.scale, 2.5 * config.scale, 1.5 * config.scale), npcArmorMat);
+  chest.position.y = 3.6 * config.scale;
+  torso.add(chest);
+
+  // Neon Energy Core
+  const core = new THREE.Mesh(new THREE.CylinderGeometry(0.45 * config.scale, 0.45 * config.scale, 0.35 * config.scale, 16), trimMat);
+  core.rotation.x = Math.PI / 2;
+  core.position.set(0, 3.7 * config.scale, 0.8 * config.scale);
+  torso.add(core);
+
+  // Optional Cyber Cape / Haori Coat
+  if (config.hasCape) {
+    const capeGeo = new THREE.PlaneGeometry(2.2 * config.scale, 3.8 * config.scale);
+    const capeMat = new THREE.MeshStandardMaterial({
+      color: config.capeCol,
+      side: THREE.DoubleSide,
+      roughness: 0.5,
+      metalness: 0.3
+    });
+    const cape = new THREE.Mesh(capeGeo, capeMat);
+    cape.position.set(0, 2.6 * config.scale, -0.85 * config.scale);
+    cape.rotation.x = 0.12;
+    torso.add(cape);
+    torso.userData.cape = cape;
+  }
+
+  // 2. Head with Distinct Helmet / Horns / Headdress
+  const head = new THREE.Group();
+  head.position.set(0, 5.1 * config.scale, 0);
+  const helmet = new THREE.Mesh(new THREE.BoxGeometry(1.35 * config.scale, 1.35 * config.scale, 1.35 * config.scale), npcArmorMat);
+  head.add(helmet);
+
+  const visor = new THREE.Mesh(new THREE.BoxGeometry(1.38 * config.scale, 0.4 * config.scale, 0.55 * config.scale), visorMat);
+  visor.position.set(0, 0.08 * config.scale, -0.6 * config.scale);
+  head.add(visor);
+
+  // Crest / Antenna
+  const crest = new THREE.Mesh(new THREE.ConeGeometry(0.35 * config.scale, 0.9 * config.scale, 4), trimMat);
+  crest.position.set(0, 0.9 * config.scale, 0);
+  head.add(crest);
+  torso.add(head);
+
+  // 3. Arms
+  const lArm = new THREE.Group();
+  lArm.position.set(-1.5 * config.scale, 4.5 * config.scale, 0);
+  const lArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.65 * config.scale, 2.3 * config.scale, 0.75 * config.scale), npcArmorMat);
+  lArmMesh.position.y = -0.9 * config.scale;
+  lArm.add(lArmMesh);
+  torso.add(lArm);
+
+  const rArm = new THREE.Group();
+  rArm.position.set(1.5 * config.scale, 4.5 * config.scale, 0);
+  const rArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.65 * config.scale, 2.3 * config.scale, 0.75 * config.scale), npcArmorMat);
+  rArmMesh.position.y = -0.9 * config.scale;
+  rArm.add(rArmMesh);
+  torso.add(rArm);
+
+  npcGroup.add(torso);
+
+  // 4. Legs
+  const lLeg = new THREE.Group();
+  lLeg.position.set(-0.65 * config.scale, 2.3 * config.scale, 0);
+  const lLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.78 * config.scale, 2.3 * config.scale, 0.88 * config.scale), npcArmorMat);
+  lLegMesh.position.y = -1.1 * config.scale;
+  lLeg.add(lLegMesh);
+  npcGroup.add(lLeg);
+
+  const rLeg = new THREE.Group();
+  rLeg.position.set(0.65 * config.scale, 2.3 * config.scale, 0);
+  const rLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.78 * config.scale, 2.3 * config.scale, 0.88 * config.scale), npcArmorMat);
+  rLegMesh.position.y = -1.1 * config.scale;
+  rLeg.add(rLegMesh);
+  npcGroup.add(rLeg);
+
+  // Feet Neon Ring
+  const footRing = new THREE.Mesh(
+    new THREE.RingGeometry(1.4 * config.scale, 2.0 * config.scale, 24),
+    new THREE.MeshBasicMaterial({ color: config.trimCol, side: THREE.DoubleSide, transparent: true, opacity: 0.55 })
+  );
+  footRing.rotation.x = Math.PI / 2;
+  footRing.position.y = 0.05;
+  npcGroup.add(footRing);
+
+  // Initial Grounding
+  const groundY = getTerrainHeightAt(baseX, baseZ);
+  npcGroup.position.set(baseX, groundY, baseZ);
+  npcGroup.rotation.y = Math.random() * Math.PI * 2;
+
+  worldGroup.add(npcGroup);
+
+  earth3NPCs.push({
+    group: npcGroup,
+    torso,
+    lArm,
+    rArm,
+    lLeg,
+    rLeg,
+    baseX,
+    baseZ,
+    wanderRadius: 10 + Math.random() * 8,
+    speed: 0.6 + Math.random() * 0.5,
+    angle: Math.random() * Math.PI * 2,
+    idlePhase: Math.random() * 10
+  });
+}
+
+// ----------------------------------------------------
+// ANIMALS: Quantum Cyber Rabbits (Kharagosh), Neon Deer (Hiran) & Fox Spirits
+// ----------------------------------------------------
+
+// 1. Quantum Cyber Rabbit (Kharagosh) with long twitching ears & hopping motion
+function createQuantumRabbit(baseX, baseZ, colorHex) {
+  const g = new THREE.Group();
+  const furMat = new THREE.MeshStandardMaterial({
+    color: colorHex,
+    roughness: 0.4,
+    metalness: 0.1,
+    emissive: colorHex,
+    emissiveIntensity: 0.25
+  });
+  const neonEyeMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+
+  // Body
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.75, 12, 10), furMat);
+  body.scale.set(1.0, 0.9, 1.4);
+  body.position.y = 0.8;
+  g.add(body);
+
+  // Head
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 10), furMat);
+  head.position.set(0, 1.35, -0.75);
+  g.add(head);
+
+  // Eyes
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), neonEyeMat);
+  eyeL.position.set(-0.35, 1.45, -1.05);
+  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), neonEyeMat);
+  eyeR.position.set(0.35, 1.45, -1.05);
+  g.add(eyeL);
+  g.add(eyeR);
+
+  // Long Ears
+  const earL = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.18, 1.1, 8), furMat);
+  earL.position.set(-0.25, 2.1, -0.65);
+  earL.rotation.z = -0.25;
+  earL.rotation.x = -0.2;
+  const earR = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.18, 1.1, 8), furMat);
+  earR.position.set(0.25, 2.1, -0.65);
+  earR.rotation.z = 0.25;
+  earR.rotation.x = -0.2;
+  g.add(earL);
+  g.add(earR);
+
+  // Tail (Fluffy Little Ball)
+  const tail = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), furMat);
+  tail.position.set(0, 0.9, 1.25);
+  g.add(tail);
+
+  // Legs
+  const legFL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.25), furMat);
+  legFL.position.set(-0.35, 0.25, -0.4);
+  const legFR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.25), furMat);
+  legFR.position.set(0.35, 0.25, -0.4);
+  const legBL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.6, 0.5), furMat);
+  legBL.position.set(-0.45, 0.3, 0.5);
+  const legBR = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.6, 0.5), furMat);
+  legBR.position.set(0.45, 0.3, 0.5);
+  g.add(legFL); g.add(legFR); g.add(legBL); g.add(legBR);
+
+  const yPos = getTerrainHeightAt(baseX, baseZ);
+  g.position.set(baseX, yPos, baseZ);
+  g.rotation.y = Math.random() * Math.PI * 2;
+  worldGroup.add(g);
+
+  earth3Animals.push({
+    type: 'rabbit',
+    group: g,
+    earL,
+    earR,
+    baseX,
+    baseZ,
+    radius: 8 + Math.random() * 12,
+    angle: Math.random() * Math.PI * 2,
+    hopSpeed: 2.8 + Math.random() * 1.5,
+    hopPhase: Math.random() * 10
+  });
+}
+
+// 2. Astral Neon Deer (Hiran) with glowing branching antlers & graceful gait
+function createAstralDeer(baseX, baseZ, antlerColorHex) {
+  const g = new THREE.Group();
+  const deerBodyMat = new THREE.MeshStandardMaterial({
+    color: 0x4a2810, // Rich warm amber brown
+    roughness: 0.5,
+    metalness: 0.2
+  });
+  const antlerMat = new THREE.MeshBasicMaterial({ color: antlerColorHex });
+  const deerEyeMat = new THREE.MeshBasicMaterial({ color: 0xffd166 });
+
+  // Body
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.8, 3.2), deerBodyMat);
+  body.position.y = 3.6;
+  g.add(body);
+
+  // Long Neck & Graceful Head
+  const neck = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2.2, 1.0), deerBodyMat);
+  neck.position.set(0, 4.8, -1.4);
+  neck.rotation.x = -0.45;
+  g.add(neck);
+
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 1.4), deerBodyMat);
+  head.position.set(0, 5.8, -2.1);
+  g.add(head);
+
+  // Eyes
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), deerEyeMat);
+  eyeL.position.set(-0.48, 5.9, -2.3);
+  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), deerEyeMat);
+  eyeR.position.set(0.48, 5.9, -2.3);
+  g.add(eyeL); g.add(eyeR);
+
+  // Majestic Branching Antlers (Crystalline Neon)
+  const antlerGroup = new THREE.Group();
+  antlerGroup.position.set(0, 6.3, -2.0);
+
+  // Main stems
+  const stemL = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.16, 2.2, 8), antlerMat);
+  stemL.position.set(-0.7, 0.9, 0.1);
+  stemL.rotation.z = -0.45;
+  stemL.rotation.x = 0.2;
+  const stemR = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.16, 2.2, 8), antlerMat);
+  stemR.position.set(0.7, 0.9, 0.1);
+  stemR.rotation.z = 0.45;
+  stemR.rotation.x = 0.2;
+  antlerGroup.add(stemL);
+  antlerGroup.add(stemR);
+
+  // Antler Tines / branches
+  const tineL1 = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.1, 1.1, 6), antlerMat);
+  tineL1.position.set(-1.1, 1.4, 0.4);
+  tineL1.rotation.z = -0.8;
+  const tineR1 = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.1, 1.1, 6), antlerMat);
+  tineR1.position.set(1.1, 1.4, 0.4);
+  tineR1.rotation.z = 0.8;
+  antlerGroup.add(tineL1);
+  antlerGroup.add(tineR1);
+  g.add(antlerGroup);
+
+  // 4 Slender Legs
+  const legFL = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.14, 2.8, 8), deerBodyMat);
+  legFL.position.set(-0.6, 1.4, -1.1);
+  const legFR = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.14, 2.8, 8), deerBodyMat);
+  legFR.position.set(0.6, 1.4, -1.1);
+  const legBL = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.15, 2.8, 8), deerBodyMat);
+  legBL.position.set(-0.6, 1.4, 1.1);
+  const legBR = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.15, 2.8, 8), deerBodyMat);
+  legBR.position.set(0.6, 1.4, 1.1);
+  g.add(legFL); g.add(legFR); g.add(legBL); g.add(legBR);
+
+  // Gentle white flank spots
+  const spotsMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  for (let s = 0; s < 6; s++) {
+    const spot = new THREE.Mesh(new THREE.CircleGeometry(0.12, 8), spotsMat);
+    spot.position.set(0.81, 3.6 + (s % 2) * 0.4 - 0.2, (s - 2.5) * 0.5);
+    spot.rotation.y = Math.PI / 2;
+    g.add(spot);
+    const spotL = spot.clone();
+    spotL.position.x = -0.81;
+    spotL.rotation.y = -Math.PI / 2;
+    g.add(spotL);
+  }
+
+  const yPos = getTerrainHeightAt(baseX, baseZ);
+  g.position.set(baseX, yPos, baseZ);
+  g.rotation.y = Math.random() * Math.PI * 2;
+  worldGroup.add(g);
+
+  earth3Animals.push({
+    type: 'deer',
+    group: g,
+    neck,
+    antlerGroup,
+    legFL, legFR, legBL, legBR,
+    baseX,
+    baseZ,
+    radius: 12 + Math.random() * 14,
+    angle: Math.random() * Math.PI * 2,
+    walkSpeed: 0.5 + Math.random() * 0.4,
+    walkPhase: Math.random() * 10
+  });
+}
+
+// 3. Kitsune Cyber Fox (Dusare Janavar - Multi-Tailed Mystic Fox)
+function createCyberFox(baseX, baseZ) {
+  const g = new THREE.Group();
+  const foxMat = new THREE.MeshStandardMaterial({
+    color: 0xef476f, // Radiant Sakura Vermilion
+    roughness: 0.35,
+    metalness: 0.2,
+    emissive: 0xef476f,
+    emissiveIntensity: 0.2
+  });
+  const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x06d6a0 });
+
+  // Sleek Torso
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.1, 2.4), foxMat);
+  body.position.y = 1.4;
+  g.add(body);
+
+  // Chest white patch
+  const chest = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 0.9), whiteMat);
+  chest.position.set(0, 1.4, -0.8);
+  g.add(chest);
+
+  // Head with pointed snout
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 1.0), foxMat);
+  head.position.set(0, 2.1, -1.3);
+  g.add(head);
+
+  const snout = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 4), whiteMat);
+  snout.rotation.x = -Math.PI / 2;
+  snout.position.set(0, 1.95, -1.9);
+  g.add(snout);
+
+  // Big Triangular Ears
+  const earL = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 4), foxMat);
+  earL.position.set(-0.35, 2.7, -1.2);
+  const earR = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 4), foxMat);
+  earR.position.set(0.35, 2.7, -1.2);
+  g.add(earL); g.add(earR);
+
+  // Glowing eyes
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), eyeMat);
+  eyeL.position.set(-0.35, 2.15, -1.65);
+  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), eyeMat);
+  eyeR.position.set(0.35, 2.15, -1.65);
+  g.add(eyeL); g.add(eyeR);
+
+  // 3 Fluffy Tails with White Glowing Tips
+  const tailsGroup = new THREE.Group();
+  tailsGroup.position.set(0, 1.4, 1.2);
+  for (let t = -1; t <= 1; t++) {
+    const tGroup = new THREE.Group();
+    const tMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.45, 1.6, 8), foxMat);
+    tMesh.position.y = 0.8;
+    tGroup.add(tMesh);
+    const tipMesh = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.6, 8), whiteMat);
+    tipMesh.position.y = 1.8;
+    tGroup.add(tipMesh);
+
+    tGroup.rotation.x = 0.6;
+    tGroup.rotation.y = t * 0.45;
+    tailsGroup.add(tGroup);
+  }
+  g.add(tailsGroup);
+
+  // 4 Paws
+  const pawFL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.9, 0.28), foxMat);
+  pawFL.position.set(-0.4, 0.45, -0.7);
+  const pawFR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.9, 0.28), foxMat);
+  pawFR.position.set(0.4, 0.45, -0.7);
+  const pawBL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.9, 0.32), foxMat);
+  pawBL.position.set(-0.4, 0.45, 0.7);
+  const pawBR = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.9, 0.32), foxMat);
+  pawBR.position.set(0.4, 0.45, 0.7);
+  g.add(pawFL); g.add(pawFR); g.add(pawBL); g.add(pawBR);
+
+  const yPos = getTerrainHeightAt(baseX, baseZ);
+  g.position.set(baseX, yPos, baseZ);
+  g.rotation.y = Math.random() * Math.PI * 2;
+  worldGroup.add(g);
+
+  earth3Animals.push({
+    type: 'fox',
+    group: g,
+    tailsGroup,
+    baseX,
+    baseZ,
+    radius: 10 + Math.random() * 10,
+    angle: Math.random() * Math.PI * 2,
+    speed: 0.9 + Math.random() * 0.5,
+    phase: Math.random() * 10
+  });
+}
+
+// Spawn all NPCs on Earth-3 South Sakura Highlands (Around Z: -240)
+const npcPositions = [
+  { x: -14, z: -228 }, // Near the bridge arrival path
+  { x: 18, z: -232 },  // Overlooking the blossom groves
+  { x: -22, z: -250 }, // Near the ancient shrine stones
+  { x: 14, z: -254 },  // Near the southern Sakura tree
+  { x: 0, z: -262 }    // Deep Sakura sacred grove
+];
+
+for (let i = 0; i < npcCostumes.length; i++) {
+  const pos = npcPositions[i];
+  createEarth3NPC(npcCostumes[i], pos.x, pos.z);
+}
+
+// Spawn Fauna on Earth-3:
+// 1. Rabbits (Kharagosh)
+createQuantumRabbit(-8, -222, 0xffffff); // Pure Snow White
+createQuantumRabbit(-12, -225, 0xffc6ff); // Sakura Pink
+createQuantumRabbit(9, -236, 0xe0aaff);  // Lavender
+createQuantumRabbit(22, -245, 0xffffff); // White
+createQuantumRabbit(-6, -252, 0xffadad); // Rose
+
+// 2. Astral Deer (Hiran) with glowing branching antlers
+createAstralDeer(-26, -235, 0x00f0ff); // Neon Cyan Antler Stag
+createAstralDeer(26, -238, 0xff007f);  // Magenta Antler Doe
+createAstralDeer(5, -265, 0xffd166);   // Golden Horned Grand Elk
+createAstralDeer(-18, -260, 0x06d6a0); // Emerald Forest Deer
+
+// 3. Kitsune Mystic Foxes (Dusare Janavar)
+createCyberFox(-16, -244);
+createCyberFox(15, -248);
+createCyberFox(0, -236);
+
 let joystickMove = { x: 0, y: 0 }; // Touch joystick inputs (-1 to +1)
 const velocity = { x: 0, y: 0, z: 0 };
 
@@ -1504,6 +2003,7 @@ let isAutoRunningOnHighway = false;
 let autoRunTarget = null;
 let autoRunEarthId = null;
 let autoRunSpeed = 32.0; // Comfortable, smooth jogging pace along cosmic highway
+let gateCooldown = 0; // Cooldown timer (seconds) to prevent re-triggering loop upon arrival
 
 // ========================================================
 // 6. WALKING ENGINE (KEYBOARD + MOUSE & PUBG TOUCH THUMBSTICKS)
@@ -1875,37 +2375,69 @@ window.addEventListener('mousemove', (e) => {
     const parentLandmark = targetMesh.parent;
     const data = targetMesh.userData || parentLandmark.userData;
 
-    if (hoveredLandmark !== parentLandmark) {
-      // Hide previously hovered badge
-      if (hoveredLandmark) {
-        const prevBadge = hoveredLandmark.getObjectByName('badgeSprite');
-        if (prevBadge) {
-          prevBadge.visible = false;
-          prevBadge.material.opacity = 0;
+    // Check proximity/distance to the flower:
+    // In 'walk' mode: check distance between player character and flower.
+    // In 'orbit' / 'fly' mode: check distance between camera and flower (or intersection point).
+    let isCloseEnough = false;
+    const maxWalkDistance = 22.0; // Max distance in walk mode (only visible when near flower)
+    const maxOrbitDistance = 45.0; // Max distance in orbit/fly mode
+
+    if (currentMode === 'walk') {
+      const flowerPos = new THREE.Vector3();
+      parentLandmark.getWorldPosition(flowerPos);
+      const distToPlayer = playerGroup.position.distanceTo(flowerPos);
+      isCloseEnough = distToPlayer <= maxWalkDistance;
+    } else {
+      // In Orbit or Fly mode, check distance from camera to intersection point
+      const distToCamera = intersects[0].distance;
+      isCloseEnough = distToCamera <= maxOrbitDistance;
+    }
+
+    if (isCloseEnough) {
+      if (hoveredLandmark !== parentLandmark) {
+        // Hide previously hovered badge
+        if (hoveredLandmark) {
+          const prevBadge = hoveredLandmark.getObjectByName('badgeSprite');
+          if (prevBadge) {
+            prevBadge.visible = false;
+            prevBadge.material.opacity = 0;
+          }
+        }
+
+        hoveredLandmark = parentLandmark;
+        canvas.style.cursor = 'pointer';
+
+        // Reveal 3D Hologram Badge on the hovered flower
+        const badge = hoveredLandmark.getObjectByName('badgeSprite');
+        if (badge) {
+          badge.visible = true;
+          badge.material.opacity = 1;
+        }
+
+        // Update Cursor Tooltip
+        if (data) {
+          tooltipId.innerText = `ID: ${data.entityId || data.id}`;
+          tooltipName.innerText = data.name;
+          hoverTooltip.classList.add('visible');
         }
       }
 
-      hoveredLandmark = parentLandmark;
-      canvas.style.cursor = 'pointer';
-
-      // Reveal 3D Hologram Badge on the hovered flower
-      const badge = hoveredLandmark.getObjectByName('badgeSprite');
-      if (badge) {
-        badge.visible = true;
-        badge.material.opacity = 1;
-      }
-
-      // Update Cursor Tooltip
-      if (data) {
-        tooltipId.innerText = `ID: ${data.entityId || data.id}`;
-        tooltipName.innerText = data.name;
-        hoverTooltip.classList.add('visible');
+      // Position tooltip right above mouse cursor
+      hoverTooltip.style.left = `${e.clientX}px`;
+      hoverTooltip.style.top = `${e.clientY}px`;
+    } else {
+      // If cursor is on a flower but player is too far away, do not display
+      if (hoveredLandmark) {
+        const badge = hoveredLandmark.getObjectByName('badgeSprite');
+        if (badge) {
+          badge.visible = false;
+          badge.material.opacity = 0;
+        }
+        hoveredLandmark = null;
+        canvas.style.cursor = 'grab';
+        hoverTooltip.classList.remove('visible');
       }
     }
-
-    // Position tooltip right above mouse cursor
-    hoverTooltip.style.left = `${e.clientX}px`;
-    hoverTooltip.style.top = `${e.clientY}px`;
   } else {
     if (hoveredLandmark) {
       const badge = hoveredLandmark.getObjectByName('badgeSprite');
@@ -2018,13 +2550,18 @@ function animate() {
 
   // Mode Logic
   if (currentMode === 'walk') {
+    // Cooldown decrement to prevent gate ping-pong loops
+    if (gateCooldown > 0) {
+      gateCooldown -= delta;
+    }
+
     // 0. AUTO-RUN HIGHWAY SPRINT ENGINE (When passing through Gates onto Roads)
     if (isAutoRunningOnHighway && autoRunTarget) {
       const dx = autoRunTarget.x - playerGroup.position.x;
       const dz = autoRunTarget.z - playerGroup.position.z;
       const distToDestination = Math.hypot(dx, dz);
 
-      if (distToDestination > 4.0) {
+      if (distToDestination > 2.0) {
         const roadAngle = Math.atan2(dx, dz);
         playerGroup.position.x += Math.sin(roadAngle) * autoRunSpeed * delta;
         playerGroup.position.z += Math.cos(roadAngle) * autoRunSpeed * delta;
@@ -2041,76 +2578,78 @@ function animate() {
         rightArmGroup.rotation.x = Math.sin(runTime) * 0.7;
         torsoGroup.position.y = Math.abs(Math.sin(runTime * 2)) * 0.25;
       } else {
-        // Arrived at destination world!
+        // Arrived safely slightly past destination gate!
         isAutoRunningOnHighway = false;
         autoRunTarget = null;
+        gateCooldown = 3.5; // 3.5 seconds cooldown so the arrival gate doesn't immediately bounce back!
         if (autoRunEarthId) {
-          switchEarthRealm(autoRunEarthId);
+          // Switch atmosphere and lighting only, do NOT teleport player to world center
+          switchEarthRealm(autoRunEarthId, false);
           showToast(`🌍 Welcome Earth ${autoRunEarthId}!`);
         }
       }
-    } else {
-      // Gate Detection: Check if player walks near any of the 4 Gateways
+    } else if (gateCooldown <= 0) {
+      // Gate Detection: Only triggers when player walks into gate and not in cooldown
       const px = playerGroup.position.x;
       const pz = playerGroup.position.z;
 
-      // 1. North Gate (Z: ~68, X: ~0) -> Auto-Run North to Earth-2
+      // 1. North Gate (Z: ~68, X: ~0) -> Auto-Run North to Earth-2 (Stops ~8m past Earth-2 gate at Z: 188)
       if (Math.hypot(px - 0, pz - 68) < 6.5 && (keys.forward || joystickMove.y < -0.2)) {
         isAutoRunningOnHighway = true;
-        autoRunTarget = { x: 0, z: 240 };
+        autoRunTarget = { x: 0, z: 188 }; // Lands comfortably past Earth-2 Gate (Z: 180)
         autoRunEarthId = '2';
         showToast('🚀 North Cyber Gate Engaged: Highway Auto-Sprint to Earth-2!');
       }
-      // 2. South Gate (Z: ~-68, X: ~0) -> Auto-Run South to Earth-3
+      // 2. South Gate (Z: ~-68, X: ~0) -> Auto-Run South to Earth-3 (Stops ~8m past Earth-3 gate at Z: -188)
       else if (Math.hypot(px - 0, pz - (-68)) < 6.5 && (keys.forward || joystickMove.y > 0.2 || keys.backward)) {
         isAutoRunningOnHighway = true;
-        autoRunTarget = { x: 0, z: -240 };
+        autoRunTarget = { x: 0, z: -188 }; // Lands comfortably past Earth-3 Gate (Z: -180)
         autoRunEarthId = '3';
         showToast('🚀 South Cyber Gate Engaged: Highway Auto-Sprint to Earth-3!');
       }
-      // 3. West Gate (X: ~-68, Z: ~0) -> Auto-Run West to Earth-4
-      else if (Math.hypot(px - (-68), pz - 0) < 6.5) {
+      // 3. West Gate (X: ~-68, Z: ~0) -> Auto-Run West to Earth-4 (Stops ~8m past Earth-4 gate at X: -198)
+      else if (Math.hypot(px - (-68), pz - 0) < 6.5 && (keys.forward || keys.left || joystickMove.x < -0.2)) {
         isAutoRunningOnHighway = true;
-        autoRunTarget = { x: -250, z: 0 };
+        autoRunTarget = { x: -198, z: 0 }; // Lands comfortably past Earth-4 Gate (X: -190)
         autoRunEarthId = '4';
         showToast('🚀 West Cyber Gate Engaged: Highway Auto-Sprint to Earth-4!');
       }
-      // 4. East Gate (X: ~68, Z: ~0) -> Auto-Run East to Earth-5
-      else if (Math.hypot(px - 68, pz - 0) < 6.5) {
+      // 4. East Gate (X: ~68, Z: ~0) -> Auto-Run East to Earth-5 (Stops ~8m past Earth-5 gate at X: 198)
+      else if (Math.hypot(px - 68, pz - 0) < 6.5 && (keys.forward || keys.right || joystickMove.x > 0.2)) {
         isAutoRunningOnHighway = true;
-        autoRunTarget = { x: 250, z: 0 };
+        autoRunTarget = { x: 198, z: 0 }; // Lands comfortably past Earth-5 Gate (X: 190)
         autoRunEarthId = '5';
         showToast('🚀 East Cyber Gate Engaged: Highway Auto-Sprint to Earth-5!');
       }
 
       // ==========================================
-      // RETURN GATES: Auto-Run Back to Central Earth-1
+      // RETURN GATES: Auto-Run Back past Central Earth-1 Gate
       // ==========================================
-      // Return Gate from Earth-2 North (Z: ~180, X: ~0)
-      else if (Math.hypot(px - 0, pz - 180) < 6.5) {
+      // Return Gate from Earth-2 North (Z: ~180, X: ~0) -> Steps into Earth-1 (Stops at Z: 60)
+      else if (Math.hypot(px - 0, pz - 180) < 6.5 && (keys.forward || joystickMove.y < -0.2 || keys.backward)) {
         isAutoRunningOnHighway = true;
-        autoRunTarget = { x: 0, z: 15 };
+        autoRunTarget = { x: 0, z: 60 }; // Lands comfortably inside Earth-1 (Gate is at 68)
         autoRunEarthId = '1';
         showToast('🔄 Return Gate Engaged: Auto-Sprinting Back to Central Earth-1!');
       }
-      // Return Gate from Earth-3 South (Z: ~-180, X: ~0)
-      else if (Math.hypot(px - 0, pz - (-180)) < 6.5) {
+      // Return Gate from Earth-3 South (Z: ~-180, X: ~0) -> Steps into Earth-1 (Stops at Z: -60)
+      else if (Math.hypot(px - 0, pz - (-180)) < 6.5 && (keys.forward || joystickMove.y > 0.2 || keys.backward)) {
         isAutoRunningOnHighway = true;
-        autoRunTarget = { x: 0, z: -15 };
+        autoRunTarget = { x: 0, z: -60 };
         autoRunEarthId = '1';
         showToast('🔄 Return Gate Engaged: Auto-Sprinting Back to Central Earth-1!');
       }
-      // Return Gate from Earth-4 West (X: ~-190, Z: ~0)
-      else if (Math.hypot(px - (-190), pz - 0) < 6.5) {
+      // Return Gate from Earth-4 West (X: ~-190, Z: ~0) -> Steps into Earth-1 (Stops at X: -60)
+      else if (Math.hypot(px - (-190), pz - 0) < 6.5 && (keys.forward || keys.right || joystickMove.x > 0.2)) {
         isAutoRunningOnHighway = true;
-        autoRunTarget = { x: -15, z: 0 };
+        autoRunTarget = { x: -60, z: 0 };
         autoRunEarthId = '1';
         showToast('🔄 Return Gate Engaged: Auto-Sprinting Back to Central Earth-1!');
       }
-      // Return Gate from Earth-5 East (X: ~190, Z: ~0)
-      else if (Math.hypot(px - 190, pz - 0) < 6.5) {
+      // Return Gate from Earth-5 East (X: ~190, Z: ~0) -> Steps into Earth-1 (Stops at X: 60)
+      else if (Math.hypot(px - 190, pz - 0) < 6.5 && (keys.forward || keys.left || joystickMove.x < -0.2)) {
         isAutoRunningOnHighway = true;
-        autoRunTarget = { x: 15, z: 0 };
+        autoRunTarget = { x: 60, z: 0 };
         autoRunEarthId = '1';
         showToast('🔄 Return Gate Engaged: Auto-Sprinting Back to Central Earth-1!');
       }
@@ -2255,6 +2794,94 @@ function animate() {
       wingMesh.rotation.y = Math.sin(time * u.flapSpeed) * 0.7;
     }
     b.rotation.y = -bAngle + Math.PI / 2;
+  }
+
+  // 🌸 Earth-3 Costumed NPCs Animations (Gentle Wandering, Arm Swing, Cape flutter & Breathing)
+  for (let i = 0; i < earth3NPCs.length; i++) {
+    const npc = earth3NPCs[i];
+    npc.angle += delta * npc.speed * 0.2;
+    const targetX = npc.baseX + Math.cos(npc.angle) * npc.wanderRadius;
+    const targetZ = npc.baseZ + Math.sin(npc.angle) * npc.wanderRadius;
+
+    // Movement direction and facing
+    const moveDx = targetX - npc.group.position.x;
+    const moveDz = targetZ - npc.group.position.z;
+    const faceAngle = Math.atan2(moveDx, moveDz);
+
+    npc.group.position.x = targetX;
+    npc.group.position.z = targetZ;
+    npc.group.position.y = getTerrainHeightAt(targetX, targetZ);
+    npc.group.rotation.y = faceAngle + Math.PI;
+
+    // Limb swing
+    const npcWalkTime = time * 5.0 + npc.idlePhase;
+    npc.lLeg.rotation.x = Math.sin(npcWalkTime) * 0.45;
+    npc.rLeg.rotation.x = -Math.sin(npcWalkTime) * 0.45;
+    npc.lArm.rotation.x = -Math.sin(npcWalkTime) * 0.4;
+    npc.rArm.rotation.x = Math.sin(npcWalkTime) * 0.4;
+    npc.torso.position.y = Math.sin(time * 2.0 + npc.idlePhase) * 0.08;
+
+    // Cape flutter
+    if (npc.torso.userData.cape) {
+      npc.torso.userData.cape.rotation.x = 0.12 + Math.sin(time * 4.0 + i) * 0.15;
+    }
+  }
+
+  // 🐇 Earth-3 Fauna Animations (Hopping Rabbits, Grazing Deer, Prowling Foxes)
+  for (let i = 0; i < earth3Animals.length; i++) {
+    const a = earth3Animals[i];
+    if (a.type === 'rabbit') {
+      // Rabbit Hopping Loop
+      a.angle += delta * 0.28;
+      const rx = a.baseX + Math.cos(a.angle) * a.radius;
+      const rz = a.baseZ + Math.sin(a.angle) * a.radius;
+      const groundY = getTerrainHeightAt(rx, rz);
+
+      // Parabolic jump hop
+      const hopPhase = (time * a.hopSpeed + a.hopPhase) % Math.PI;
+      const hopHeight = Math.abs(Math.sin(hopPhase)) * 1.2;
+
+      a.group.position.set(rx, groundY + hopHeight, rz);
+      a.group.rotation.y = -a.angle + Math.PI / 2;
+
+      // Twitching long ears
+      a.earL.rotation.z = -0.25 + Math.sin(time * 8 + i) * 0.15;
+      a.earR.rotation.z = 0.25 - Math.sin(time * 8 + i) * 0.15;
+    } else if (a.type === 'deer') {
+      // Graceful Deer Gait & Grazing
+      a.angle += delta * a.walkSpeed * 0.18;
+      const dx = a.baseX + Math.cos(a.angle) * a.radius;
+      const dz = a.baseZ + Math.sin(a.angle) * a.radius;
+      const groundY = getTerrainHeightAt(dx, dz);
+
+      a.group.position.set(dx, groundY, dz);
+      a.group.rotation.y = -a.angle + Math.PI / 2;
+
+      // Leg step motion
+      const deerWalkTime = time * 4.0 + a.walkPhase;
+      a.legFL.rotation.x = Math.sin(deerWalkTime) * 0.35;
+      a.legBR.rotation.x = Math.sin(deerWalkTime) * 0.35;
+      a.legFR.rotation.x = -Math.sin(deerWalkTime) * 0.35;
+      a.legBL.rotation.x = -Math.sin(deerWalkTime) * 0.35;
+
+      // Gentle neck & antler head tilt (grazing)
+      a.neck.rotation.x = -0.45 + Math.sin(time * 1.5 + i) * 0.2;
+    } else if (a.type === 'fox') {
+      // Kitsune Fox Prowl & Tail Sway
+      a.angle += delta * a.speed * 0.25;
+      const fx = a.baseX + Math.cos(a.angle) * a.radius;
+      const fz = a.baseZ + Math.sin(a.angle) * a.radius;
+      const groundY = getTerrainHeightAt(fx, fz);
+
+      a.group.position.set(fx, groundY, fz);
+      a.group.rotation.y = -a.angle + Math.PI / 2;
+
+      // Majestic swaying 3 tails
+      if (a.tailsGroup) {
+        a.tailsGroup.rotation.y = Math.sin(time * 3.5 + a.phase) * 0.35;
+        a.tailsGroup.rotation.x = 0.15 + Math.sin(time * 2.0) * 0.1;
+      }
+    }
   }
 
   // 🌊 Feature 2 Animation: Interactive Lotus Lake Water Waves & Ripples
@@ -3037,7 +3664,7 @@ const earthRealms = {
 
 let activeEarth = '1';
 
-function switchEarthRealm(earthId) {
+function switchEarthRealm(earthId, teleportPlayer = true) {
   const realm = earthRealms[earthId];
   if (!realm) return;
 
@@ -3052,28 +3679,28 @@ function switchEarthRealm(earthId) {
   scene.fog.color.setHex(realm.fogColor);
   hemiLight.color.setHex(realm.lightColor);
 
-  // If in walk mode, move character directly to the new Earth's spawn zone
-  if (currentMode === 'walk') {
-    const sx = realm.playerSpawn.x;
-    const sz = realm.playerSpawn.z;
-    const sy = getTerrainHeightAt(sx, sz);
-    playerGroup.position.set(sx, sy, sz);
-    camera.position.set(sx, sy + 6.0, sz + 14.0);
-    camera.lookAt(sx, sy + 3.2, sz);
-  } else {
-    // In Orbit mode, smoothly fly camera to the new Earth realm
-    new TWEEN.Tween(camera.position)
-      .to(realm.camPos, 1600)
-      .easing(TWEEN.Easing.Cubic.InOut)
-      .start();
+  // If manual button teleport is triggered
+  if (teleportPlayer) {
+    if (currentMode === 'walk') {
+      const sx = realm.playerSpawn.x;
+      const sz = realm.playerSpawn.z;
+      const sy = getTerrainHeightAt(sx, sz);
+      playerGroup.position.set(sx, sy, sz);
+      camera.position.set(sx, sy + 6.0, sz + 14.0);
+      camera.lookAt(sx, sy + 3.2, sz);
+    } else {
+      // In Orbit mode, smoothly fly camera to the new Earth realm
+      new TWEEN.Tween(camera.position)
+        .to(realm.camPos, 1600)
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .start();
 
-    new TWEEN.Tween(orbitControls.target)
-      .to(realm.lookAt, 1600)
-      .easing(TWEEN.Easing.Cubic.InOut)
-      .start();
+      new TWEEN.Tween(orbitControls.target)
+        .to(realm.lookAt, 1600)
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .start();
+    }
   }
-
-  showToast(`🚀 Teleported to ${realm.name}`);
 }
 
 // Bind earth selector buttons
