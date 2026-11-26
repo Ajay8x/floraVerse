@@ -1263,3 +1263,280 @@ kbd {
   }
 }
 
+/* ========================================================
+   CYBERPUNK NPC DIALOGUE & QUEST SYSTEM (Feature 1)
+   ======================================================== */
+.npc-dialogue-box {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  width: 90%;
+  max-width: 680px;
+  background: rgba(10, 6, 18, 0.94);
+  border: 1px solid var(--accent-rose);
+  box-shadow: 0 0 30px rgba(255, 42, 109, 0.3), inset 0 0 15px rgba(255, 42, 109, 0.15);
+  border-radius: 14px;
+  padding: 16px 20px;
+  backdrop-filter: blur(16px);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.npc-dialogue-box.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.dialogue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 42, 109, 0.25);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.npc-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.npc-avatar-gem {
+  width: 14px;
+  height: 14px;
+  background: var(--accent-cyan);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--accent-cyan);
+}
+
+.npc-title-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.dialogue-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.dialogue-text {
+  font-family: var(--font-main);
+  font-size: 15px;
+  color: #f1edff;
+  line-height: 1.5;
+  min-height: 44px;
+  margin-bottom: 12px;
+}
+
+.quest-box {
+  background: rgba(255, 42, 109, 0.1);
+  border-left: 3px solid var(--accent-rose);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.quest-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--accent-gold);
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.quest-desc {
+  font-size: 13px;
+  color: #ffc2d4;
+}
+
+.dialogue-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-dialogue-act {
+  background: linear-gradient(135deg, rgba(255, 42, 109, 0.3), rgba(157, 78, 221, 0.3));
+  border: 1px solid var(--accent-rose);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.btn-dialogue-act:hover,
+.btn-dialogue-act.focused,
+.btn-dialogue-act:focus-visible {
+  background: var(--accent-rose);
+  color: #fff;
+  box-shadow: 0 0 18px rgba(255, 42, 109, 0.8), 0 0 4px #fff;
+  transform: translateY(-2px) scale(1.04);
+}
+
+.btn-dialogue-act.focused {
+  border-color: #fff;
+}
+
+/* NPC Prompt Toast (Talk Prompt) */
+.interact-prompt {
+  position: absolute;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(13, 8, 22, 0.9);
+  border: 1px solid var(--accent-cyan);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 20px;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 13px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 999;
+}
+
+.interact-prompt.visible {
+  opacity: 1;
+}
+
+.key-pill {
+  background: var(--accent-cyan);
+  color: #030108;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-weight: 800;
+  margin-right: 6px;
+  font-size: 11px;
+}
+
+/* ========================================================
+   FLOWER & SEED CODEX BACKPACK (Feature 5)
+   ======================================================== */
+.codex-drawer {
+  position: absolute;
+  top: 75px;
+  right: -360px;
+  width: 340px;
+  height: calc(100vh - 150px);
+  background: rgba(10, 6, 20, 0.95);
+  border-left: 1px solid var(--accent-purple);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
+  border-radius: 16px 0 0 16px;
+  backdrop-filter: blur(20px);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.codex-drawer.open {
+  right: 0;
+}
+
+.codex-header {
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.codex-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent-purple);
+  letter-spacing: 1.5px;
+}
+
+.codex-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.codex-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.codex-card:hover {
+  border-color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.08);
+}
+
+.codex-item-info strong {
+  display: block;
+  font-size: 13px;
+  color: #fff;
+  font-family: var(--font-display);
+}
+
+.codex-item-info small {
+  color: var(--accent-rose);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+.codex-count {
+  background: rgba(157, 78, 221, 0.25);
+  border: 1px solid var(--accent-purple);
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #e0aaff;
+}
+
+/* Emotes Pill Bar (Feature 6) */
+.emotes-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.btn-emote {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: var(--font-code);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-emote:hover {
+  background: var(--accent-cyan);
+  color: #000;
+  box-shadow: 0 0 10px var(--accent-cyan);
+}
+

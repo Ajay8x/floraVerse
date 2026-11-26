@@ -189,6 +189,18 @@
         <i class="fa-solid fa-magnifying-glass-plus t-emoji"></i>
         <span class="t-tip">Macro Zoom</span>
       </button>
+      <button id="btn-toggle-codex" class="tool-btn" title="🎒 Botanical Codex & Seed Inventory">
+        <i class="fa-solid fa-book-bookmark t-emoji"></i>
+        <span class="t-tip">Codex</span>
+      </button>
+      <button id="btn-emote-wave" class="tool-btn" title="👋 Emote: Cyber Namaste / Wave">
+        <i class="fa-solid fa-hand-sparkles t-emoji"></i>
+        <span class="t-tip">Namaste</span>
+      </button>
+      <button id="btn-emote-meditate" class="tool-btn" title="🧘 Emote: Meditation Stance">
+        <i class="fa-solid fa-om t-emoji"></i>
+        <span class="t-tip">Meditate</span>
+      </button>
       <button id="btn-open-terminal" class="tool-btn" title="Lenis Smooth Code Inspector">
         <i class="fa-solid fa-terminal t-emoji"></i>
         <span class="t-tip">Code Term</span>
@@ -207,8 +219,16 @@
       <!-- Right Touch Area (for looking around 360°) -->
       <div id="touch-look-zone"></div>
 
-      <!-- Right Action Buttons (PUBG Jump & Sprint) -->
+      <!-- Right Action Buttons (PUBG Jump, Sprint, Talk & Pet) -->
       <div class="mobile-action-buttons">
+        <button id="btn-mobile-talk" class="mobile-action-btn talk hidden" title="Talk / Interact">
+          <span>💬</span>
+          <small>TALK</small>
+        </button>
+        <button id="btn-mobile-pet" class="mobile-action-btn pet hidden" title="Pet / Feed Animal">
+          <span>🥕</span>
+          <small>PET</small>
+        </button>
         <button id="btn-mobile-jump" class="mobile-action-btn jump" title="Jump">
           <span>⬆️</span>
           <small>JUMP</small>
@@ -219,6 +239,46 @@
         </button>
       </div>
     </div>
+
+    <!-- Interactive Proximity Prompt Toast (PC 'E' / Mobile Tap) -->
+    <div id="interact-prompt" class="interact-prompt">
+      <span class="key-pill" id="prompt-key">E</span>
+      <span id="prompt-text">Talk to Veer Vikram</span>
+    </div>
+
+    <!-- Cyberpunk NPC Dialogue & Quest Modal (Feature 1) -->
+    <div id="npc-dialogue-box" class="npc-dialogue-box">
+      <div class="dialogue-header">
+        <div class="npc-badge">
+          <div class="npc-avatar-gem"></div>
+          <span class="npc-title-name" id="diag-npc-name">Veer Vikram (Sakura Cyber Yoddha)</span>
+        </div>
+        <button id="btn-close-dialogue" class="dialogue-close-btn">✕</button>
+      </div>
+      <div class="dialogue-text" id="diag-npc-text">
+        Pranam yatri! Yeh divya van shanti aur shakti ka sangam hai.
+      </div>
+      <div class="quest-box" id="diag-quest-box">
+        <div class="quest-title" id="diag-quest-title">📜 ACTIVE QUEST</div>
+        <div class="quest-desc" id="diag-quest-desc">Collect 3 Divine Sakura Petals around Earth-3 sanctuary.</div>
+      </div>
+      <div class="dialogue-actions">
+        <button id="btn-accept-quest" class="btn-dialogue-act">Accept Quest</button>
+        <button id="btn-dismiss-dialogue" class="btn-dialogue-act">Close</button>
+      </div>
+    </div>
+
+    <!-- Flower & Seed Collection Codex Drawer (Feature 5) -->
+    <div id="codex-drawer" class="codex-drawer">
+      <div class="codex-header">
+        <span class="codex-title">🎒 BOTANICAL CODEX</span>
+        <button id="btn-close-codex" class="dialogue-close-btn">✕</button>
+      </div>
+      <div class="codex-body" id="codex-items-list">
+        <!-- Dynamically populated collected flowers -->
+      </div>
+    </div>
+
     <div id="inspect-card" class="inspect-overlay">
       <div class="mini-inspect-left">
         <span class="inspect-id-badge" id="inspect-id">ID: FLOR-001</span>

@@ -262,6 +262,7 @@ createVastTerrain();
 // 4.5 CONNECTING ROADS (BRIDGES) & ARCHWAY ENTRY GATES
 // (Connecting Central Earth-1 to North, South, West, East Earths)
 // ========================================================
+const gateVortices = [];
 function createLuminousPathways() {
   const connections = [
     // North Road to Earth-2
@@ -364,6 +365,22 @@ function createLuminousPathways() {
       const shield = new THREE.Mesh(shieldGeo, shieldMat);
       shield.position.set(0, 4.75, 0);
       gateGroup.add(shield);
+
+      // Feature 4: Cosmic Stargate Spiral Swirl Vortex
+      const vortexGeo = new THREE.RingGeometry(0.5, 4.2, 32);
+      const vortexMat = new THREE.MeshBasicMaterial({
+        color: gColor,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.7,
+        blending: THREE.AdditiveBlending
+      });
+      const vortex = new THREE.Mesh(vortexGeo, vortexMat);
+      vortex.name = 'gateVortex';
+      vortex.position.set(0, 4.75, 0.05);
+      gateGroup.add(vortex);
+
+      gateVortices.push(vortex);
       worldGroup.add(gateGroup);
     }
 
@@ -1995,6 +2012,86 @@ createCyberFox(-16, -244);
 createCyberFox(15, -248);
 createCyberFox(0, -236);
 
+// ========================================================
+// 5.7 FALLING PETALS, LEAVES & REALM WEATHER PARTICLES (Feature 3)
+// ========================================================
+const petalCount = 850;
+const petalGeo = new THREE.BufferGeometry();
+const petalPos = new Float32Array(petalCount * 3);
+const petalCol = new Float32Array(petalCount * 3);
+const petalRot = new Float32Array(petalCount * 3);
+const petalSpeed = new Float32Array(petalCount);
+
+for (let i = 0; i < petalCount; i++) {
+  // Spawn over Earth-3 Sakura Highlands (centered at X: 0, Z: -240)
+  petalPos[i * 3 + 0] = (Math.random() - 0.5) * 110;
+  petalPos[i * 3 + 1] = 5.0 + Math.random() * 30.0;
+  petalPos[i * 3 + 2] = -240 + (Math.random() - 0.5) * 110;
+
+  // Sakura pink & golden shimmering leaf colors
+  const isGold = Math.random() < 0.25;
+  if (isGold) {
+    petalCol[i * 3 + 0] = 1.0; petalCol[i * 3 + 1] = 0.8; petalCol[i * 3 + 2] = 0.2;
+  } else {
+    petalCol[i * 3 + 0] = 1.0; petalCol[i * 3 + 1] = 0.55 + Math.random() * 0.3; petalCol[i * 3 + 2] = 0.8;
+  }
+
+  petalRot[i * 3 + 0] = Math.random() * Math.PI * 2;
+  petalRot[i * 3 + 1] = Math.random() * Math.PI * 2;
+  petalRot[i * 3 + 2] = Math.random() * Math.PI * 2;
+  petalSpeed[i] = 1.2 + Math.random() * 1.5;
+}
+
+petalGeo.setAttribute('position', new THREE.BufferAttribute(petalPos, 3));
+petalGeo.setAttribute('color', new THREE.BufferAttribute(petalCol, 3));
+
+const petalMat = new THREE.PointsMaterial({
+  size: 0.65,
+  vertexColors: true,
+  transparent: true,
+  opacity: 0.88,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false
+});
+const fallingPetalsMesh = new THREE.Points(petalGeo, petalMat);
+worldGroup.add(fallingPetalsMesh);
+
+// Companion Following Animal State (Feature 2)
+let companionAnimal = null;
+let companionTimer = 0;
+
+// Codex Collected Flowers Registry (Feature 5)
+const collectedCodex = {
+  'FLOR-001': { name: 'Crimson Rose Grove', count: 1, species: 'Rosa Aetheria' },
+  'TREE-001': { name: 'Divya Kalpavriksha', count: 1, species: 'Prunus Kalpavriksha' }
+};
+
+// Character Emote Animation State (Feature 6)
+let activeEmote = null;
+let emoteTimer = 0;
+
+// Dash Particle Trail (Feature 6)
+const dashTrailCount = 60;
+const dashTrailGeo = new THREE.BufferGeometry();
+const dashTrailPos = new Float32Array(dashTrailCount * 3);
+const dashTrailCol = new Float32Array(dashTrailCount * 3);
+for (let i = 0; i < dashTrailCount; i++) {
+  dashTrailPos[i * 3 + 0] = 0; dashTrailPos[i * 3 + 1] = -100; dashTrailPos[i * 3 + 2] = 0;
+  dashTrailCol[i * 3 + 0] = 0.0; dashTrailCol[i * 3 + 1] = 0.94; dashTrailCol[i * 3 + 2] = 1.0;
+}
+dashTrailGeo.setAttribute('position', new THREE.BufferAttribute(dashTrailPos, 3));
+dashTrailGeo.setAttribute('color', new THREE.BufferAttribute(dashTrailCol, 3));
+const dashTrailMesh = new THREE.Points(dashTrailGeo, new THREE.PointsMaterial({
+  size: 0.5,
+  vertexColors: true,
+  transparent: true,
+  opacity: 0.9,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false
+}));
+worldGroup.add(dashTrailMesh);
+let dashTrailIdx = 0;
+
 let joystickMove = { x: 0, y: 0 }; // Touch joystick inputs (-1 to +1)
 const velocity = { x: 0, y: 0, z: 0 };
 
@@ -2663,6 +2760,7 @@ function animate() {
     if (keys.forward) moveForward += 1;
     if (keys.backward) moveForward -= 1;
     if (keys.right) moveRight += 1;
+    if (keys.left) moveLeft: moveRight -= 1;
     if (keys.left) moveRight -= 1;
 
     // Mobile Thumbstick
@@ -2686,6 +2784,21 @@ function animate() {
 
     playerGroup.position.x += worldMoveX;
     playerGroup.position.z += worldMoveZ;
+
+    // Feature 6: Neon Dash Trail when Sprinting
+    if (keys.sprint && inputLen > 0.2) {
+      const dPos = dashTrailGeo.attributes.position.array;
+      const dCol = dashTrailGeo.attributes.color.array;
+      const pIdx = dashTrailIdx * 3;
+      dPos[pIdx + 0] = playerGroup.position.x + (Math.random() - 0.5) * 1.2;
+      dPos[pIdx + 1] = playerGroup.position.y + 0.3 + Math.random() * 0.8;
+      dPos[pIdx + 2] = playerGroup.position.z + (Math.random() - 0.5) * 1.2;
+      dCol[pIdx + 0] = 0.0;
+      dCol[pIdx + 1] = 0.94;
+      dCol[pIdx + 2] = 1.0;
+      dashTrailIdx = (dashTrailIdx + 1) % dashTrailCount;
+      dashTrailGeo.attributes.position.needsUpdate = true;
+    }
 
     // Smooth player box facing angle towards movement
     if (inputLen > 0.1) {
@@ -2717,14 +2830,34 @@ function animate() {
 
     // Articulated Humanoid Walk / Run Animation
     let walkCycleSpeed = (keys.sprint ? 14.0 : 8.5);
-    if (inputLen > 0.1) {
+
+    // Feature 6: Custom Emotes Overrides (Namaste / Meditate)
+    if (activeEmote) {
+      emoteTimer -= delta;
+      if (activeEmote === 'wave') {
+        // Namaste / Wave Gesture
+        leftArmGroup.rotation.x = THREE.MathUtils.lerp(leftArmGroup.rotation.x, -1.8, 0.2);
+        leftArmGroup.rotation.z = THREE.MathUtils.lerp(leftArmGroup.rotation.z, 0.4, 0.2);
+        rightArmGroup.rotation.x = THREE.MathUtils.lerp(rightArmGroup.rotation.x, -1.8, 0.2);
+        rightArmGroup.rotation.z = THREE.MathUtils.lerp(rightArmGroup.rotation.z, -0.4, 0.2);
+      } else if (activeEmote === 'meditate') {
+        // Meditate Hovering
+        playerGroup.position.y += Math.sin(time * 3) * 0.15 + 0.6;
+        leftLegGroup.rotation.x = -1.2;
+        rightLegGroup.rotation.x = -1.2;
+        leftArmGroup.rotation.z = 0.8;
+        rightArmGroup.rotation.z = -0.8;
+      }
+      if (emoteTimer <= 0) activeEmote = null;
+    } else if (inputLen > 0.1) {
       const walkTime = time * walkCycleSpeed;
       // Leg swing (alternating)
       leftLegGroup.rotation.x = Math.sin(walkTime) * 0.7;
       rightLegGroup.rotation.x = -Math.sin(walkTime) * 0.7;
-      // Arm swing (opposing legs)
       leftArmGroup.rotation.x = -Math.sin(walkTime) * 0.6;
       rightArmGroup.rotation.x = Math.sin(walkTime) * 0.6;
+      leftArmGroup.rotation.z = 0;
+      rightArmGroup.rotation.z = 0;
       // Torso natural vertical bounce
       torsoGroup.position.y = Math.abs(Math.sin(walkTime * 2)) * 0.25;
     } else {
@@ -2733,6 +2866,8 @@ function animate() {
       rightLegGroup.rotation.x = THREE.MathUtils.lerp(rightLegGroup.rotation.x, 0, 0.15);
       leftArmGroup.rotation.x = THREE.MathUtils.lerp(leftArmGroup.rotation.x, 0, 0.15);
       rightArmGroup.rotation.x = THREE.MathUtils.lerp(rightArmGroup.rotation.x, 0, 0.15);
+      leftArmGroup.rotation.z = THREE.MathUtils.lerp(leftArmGroup.rotation.z, 0, 0.15);
+      rightArmGroup.rotation.z = THREE.MathUtils.lerp(rightArmGroup.rotation.z, 0, 0.15);
       torsoGroup.position.y = Math.sin(time * 2.5) * 0.1; // Gentle breathing bob
     }
 
@@ -2910,6 +3045,57 @@ function animate() {
   for (let r = waterRipples.length - 1; r >= 0; r--) {
     waterRipples[r].time += delta;
     if (waterRipples[r].time > 3.0) waterRipples.splice(r, 1);
+  }
+
+  // 🌀 Feature 4 Animation: Stargate Cosmic Spiral Swirl Vortex on all 8 Highway Gates
+  for (let g = 0; g < gateVortices.length; g++) {
+    gateVortices[g].rotation.z += delta * 2.2;
+    gateVortices[g].scale.setScalar(1.0 + Math.sin(time * 3 + g) * 0.08);
+  }
+
+  // 🌸 Feature 3 Animation: Falling Sakura Petals & Swirling Leaves on Earth-3
+  if (fallingPetalsMesh) {
+    const pPos = petalGeo.attributes.position.array;
+    for (let i = 0; i < petalCount; i++) {
+      const idxY = i * 3 + 1;
+      pPos[idxY] -= delta * petalSpeed[i] * 3.5;
+      // Gentle horizontal drift
+      pPos[i * 3 + 0] += Math.sin(time * 1.5 + i) * delta * 2.0;
+      pPos[i * 3 + 2] += Math.cos(time * 1.2 + i) * delta * 1.5;
+
+      // Ground respawn
+      const curGround = getTerrainHeightAt(pPos[i * 3 + 0], pPos[i * 3 + 2]);
+      if (pPos[idxY] < curGround + 0.2) {
+        pPos[idxY] = curGround + 24.0 + Math.random() * 8.0;
+        pPos[i * 3 + 0] = (Math.random() - 0.5) * 110;
+        pPos[i * 3 + 2] = -240 + (Math.random() - 0.5) * 110;
+      }
+    }
+    petalGeo.attributes.position.needsUpdate = true;
+  }
+
+  // 🐾 Feature 2 Animation: Animal Companion Follower (Rabbits / Foxes following character)
+  if (companionAnimal) {
+    companionTimer -= delta;
+    const compGroup = companionAnimal.group;
+    const followTargetX = playerGroup.position.x - Math.sin(playerRotationY) * 3.5;
+    const followTargetZ = playerGroup.position.z - Math.cos(playerRotationY) * 3.5;
+
+    const cdx = followTargetX - compGroup.position.x;
+    const cdz = followTargetZ - compGroup.position.z;
+    const cDist = Math.hypot(cdx, cdz);
+
+    if (cDist > 1.2) {
+      const cAngle = Math.atan2(cdx, cdz);
+      compGroup.position.x += Math.sin(cAngle) * delta * 14.0;
+      compGroup.position.z += Math.cos(cAngle) * delta * 14.0;
+      compGroup.position.y = getTerrainHeightAt(compGroup.position.x, compGroup.position.z) + Math.abs(Math.sin(time * 12)) * 0.9;
+      compGroup.rotation.y = cAngle + Math.PI;
+    }
+    if (companionTimer <= 0) {
+      companionAnimal = null;
+      showToast('🐾 Your animal companion wandered back into the sacred grove.');
+    }
   }
 
   // 🌠 Feature 3 Animation: Meteor Showers Downward Streak (Deep 3D World)
@@ -3709,4 +3895,242 @@ document.querySelectorAll('.earth-chip').forEach(btn => {
     const eid = btn.getAttribute('data-earth');
     switchEarthRealm(eid);
   });
+});
+
+// ========================================================
+// 16. RPG SYSTEMS: NPC DIALOGUES, PETTING & CODEX LOGIC
+// ========================================================
+const interactPrompt = document.getElementById('interact-prompt');
+const promptText = document.getElementById('prompt-text');
+const npcDialogueBox = document.getElementById('npc-dialogue-box');
+const diagNpcName = document.getElementById('diag-npc-name');
+const diagNpcText = document.getElementById('diag-npc-text');
+const diagQuestTitle = document.getElementById('diag-quest-title');
+const diagQuestDesc = document.getElementById('diag-quest-desc');
+const btnCloseDialogue = document.getElementById('btn-close-dialogue');
+const btnDismissDialogue = document.getElementById('btn-dismiss-dialogue');
+const btnAcceptQuest = document.getElementById('btn-accept-quest');
+
+const btnMobileTalk = document.getElementById('btn-mobile-talk');
+const btnMobilePet = document.getElementById('btn-mobile-pet');
+
+const codexDrawer = document.getElementById('codex-drawer');
+const btnToggleCodex = document.getElementById('btn-toggle-codex');
+const btnCloseCodex = document.getElementById('btn-close-codex');
+const codexItemsList = document.getElementById('codex-items-list');
+
+const btnEmoteWave = document.getElementById('btn-emote-wave');
+const btnEmoteMeditate = document.getElementById('btn-emote-meditate');
+
+let nearbyNPC = null;
+let nearbyAnimal = null;
+
+// Check proximity to NPCs and Animals in walk mode loop
+setInterval(() => {
+  if (currentMode !== 'walk') {
+    if (interactPrompt) interactPrompt.classList.remove('visible');
+    return;
+  }
+
+  const px = playerGroup.position.x;
+  const pz = playerGroup.position.z;
+
+  // 1. Check nearby NPCs (Distance < 6m)
+  nearbyNPC = null;
+  for (let i = 0; i < earth3NPCs.length; i++) {
+    const npc = earth3NPCs[i];
+    const dist = Math.hypot(px - npc.group.position.x, pz - npc.group.position.z);
+    if (dist < 6.5) {
+      nearbyNPC = npc;
+      break;
+    }
+  }
+
+  // 2. Check nearby Animals (Distance < 5m)
+  nearbyAnimal = null;
+  if (!nearbyNPC) {
+    for (let i = 0; i < earth3Animals.length; i++) {
+      const a = earth3Animals[i];
+      const dist = Math.hypot(px - a.group.position.x, pz - a.group.position.z);
+      if (dist < 5.5) {
+        nearbyAnimal = a;
+        break;
+      }
+    }
+  }
+
+  if (nearbyNPC) {
+    const npcData = npcCostumes.find(c => c.name === nearbyNPC.group.userData?.name) || npcCostumes[0];
+    if (promptText) promptText.innerText = `Talk to ${npcData.name}`;
+    if (interactPrompt) interactPrompt.classList.add('visible');
+    if (btnMobileTalk) btnMobileTalk.classList.remove('hidden');
+    if (btnMobilePet) btnMobilePet.classList.add('hidden');
+  } else if (nearbyAnimal) {
+    const animalLabel = nearbyAnimal.type === 'rabbit' ? 'Rabbit' : (nearbyAnimal.type === 'deer' ? 'Astral Deer' : 'Mystic Fox');
+    if (promptText) promptText.innerText = `Pet & Feed ${animalLabel}`;
+    if (interactPrompt) interactPrompt.classList.add('visible');
+    if (btnMobileTalk) btnMobileTalk.classList.add('hidden');
+    if (btnMobilePet) btnMobilePet.classList.remove('hidden');
+  } else {
+    if (interactPrompt) interactPrompt.classList.remove('visible');
+    if (btnMobileTalk) btnMobileTalk.classList.add('hidden');
+    if (btnMobilePet) btnMobilePet.classList.add('hidden');
+  }
+}, 200);
+
+// Open Dialogue Modal with Animated Typewriter Text
+let dialogueButtonFocusIndex = 0; // 0: Accept Quest, 1: Close
+
+function updateDialogueFocus() {
+  if (!btnAcceptQuest || !btnDismissDialogue) return;
+  if (dialogueButtonFocusIndex === 0) {
+    btnAcceptQuest.classList.add('focused');
+    btnAcceptQuest.focus();
+    btnDismissDialogue.classList.remove('focused');
+  } else {
+    btnDismissDialogue.classList.add('focused');
+    btnDismissDialogue.focus();
+    btnAcceptQuest.classList.remove('focused');
+  }
+}
+
+function openNPCDialogue(npc) {
+  const npcInfo = npcCostumes.find(c => c.name === npc.group.userData?.name) || npcCostumes[0];
+  diagNpcName.innerText = `${npcInfo.name} (${npcInfo.title})`;
+
+  const sampleDialogues = [
+    'Pranam yatri! Yeh divya van shanti aur brahmaandiya shakti ka sangam hai. Yahan aakar man shant ho jata hai.',
+    'Panch Prithviyon ka santulan hi is srishti ka mooladhar hai. Dhyan rahe koi dwar band na ho.',
+    'In divya vanaspatiyon aur phoolon me anant cosmic urja daud rahi hai. Inhe dhyan se dekho!',
+    'Chaar dwar khule hain, sabhi dishaon me nayi duniya pukarti hai. Yatra shubh ho!'
+  ];
+  const dialogueToType = sampleDialogues[Math.floor(Math.random() * sampleDialogues.length)];
+
+  // Typewriter effect with proper spacing
+  diagNpcText.textContent = '';
+  let charIdx = 0;
+  clearInterval(window.diagInterval);
+  window.diagInterval = setInterval(() => {
+    if (charIdx <= dialogueToType.length) {
+      diagNpcText.textContent = dialogueToType.slice(0, charIdx);
+      charIdx++;
+    } else {
+      clearInterval(window.diagInterval);
+    }
+  }, 22);
+
+  diagQuestTitle.innerText = `📜 ACTIVE QUEST: EXPLORE EARTH-3`;
+  diagQuestDesc.innerText = `Inspect 3 glowing flowers in the Sakura Sanctuary to absorb cosmic botanical knowledge.`;
+
+  npcDialogueBox.classList.add('active');
+  dialogueButtonFocusIndex = 0;
+  updateDialogueFocus();
+}
+
+// Pet and Feed Animal -> Triggers Companion Follower
+function petNearbyAnimal(animal) {
+  companionAnimal = animal;
+  companionTimer = 18.0; // Follow for 18 seconds
+  showToast(`🥕 You fed the ${animal.type}! It is now following you happily as your companion! 🐾`);
+  // Small joyful hop
+  animal.group.position.y += 1.5;
+}
+
+// Key 'E', Arrow Keys, Tab, Enter & Escape Listeners
+window.addEventListener('keydown', (e) => {
+  // If dialogue box is open, handle keyboard navigation (Arrows, Tab, Enter, Esc)
+  if (npcDialogueBox && npcDialogueBox.classList.contains('active')) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      dialogueButtonFocusIndex = (dialogueButtonFocusIndex === 0) ? 1 : 0;
+      updateDialogueFocus();
+      return;
+    }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      dialogueButtonFocusIndex = 1; // Move to Close
+      updateDialogueFocus();
+      return;
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      dialogueButtonFocusIndex = 0; // Move to Accept Quest
+      updateDialogueFocus();
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (dialogueButtonFocusIndex === 0) {
+        btnAcceptQuest.click();
+      } else {
+        btnDismissDialogue.click();
+      }
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      btnDismissDialogue.click();
+      return;
+    }
+  }
+
+  // Open dialogue or pet with 'E'
+  if (e.code === 'KeyE') {
+    if (nearbyNPC) {
+      openNPCDialogue(nearbyNPC);
+    } else if (nearbyAnimal) {
+      petNearbyAnimal(nearbyAnimal);
+    }
+  }
+});
+
+btnMobileTalk?.addEventListener('click', () => {
+  if (nearbyNPC) openNPCDialogue(nearbyNPC);
+});
+btnMobilePet?.addEventListener('click', () => {
+  if (nearbyAnimal) petNearbyAnimal(nearbyAnimal);
+});
+
+btnCloseDialogue?.addEventListener('click', () => npcDialogueBox.classList.remove('active'));
+btnDismissDialogue?.addEventListener('click', () => npcDialogueBox.classList.remove('active'));
+btnAcceptQuest?.addEventListener('click', () => {
+  npcDialogueBox.classList.remove('active');
+  showToast('✨ Quest Accepted! Explore the sanctuary to gather cosmic flora essence.');
+});
+
+// Codex Drawer Toggle & Population
+function updateCodexUI() {
+  if (!codexItemsList) return;
+  codexItemsList.innerHTML = '';
+  for (const [id, item] of Object.entries(collectedCodex)) {
+    const card = document.createElement('div');
+    card.className = 'codex-card';
+    card.innerHTML = `
+      <div class="codex-item-info">
+        <strong>${item.name}</strong>
+        <small>${item.species} • ID: ${id}</small>
+      </div>
+      <span class="codex-count">x${item.count}</span>
+    `;
+    codexItemsList.appendChild(card);
+  }
+}
+
+btnToggleCodex?.addEventListener('click', () => {
+  updateCodexUI();
+  codexDrawer.classList.toggle('open');
+});
+btnCloseCodex?.addEventListener('click', () => codexDrawer.classList.remove('open'));
+
+// Emotes Trigger
+btnEmoteWave?.addEventListener('click', () => {
+  activeEmote = 'wave';
+  emoteTimer = 3.0;
+  showToast('🙏 Cyber Namaste: Greeting all wanderers across the multiverse!');
+});
+
+btnEmoteMeditate?.addEventListener('click', () => {
+  activeEmote = 'meditate';
+  emoteTimer = 4.5;
+  showToast('🧘 Deep Meditation: Levitating with cosmic energy...');
 });
