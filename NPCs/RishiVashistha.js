@@ -1,17 +1,17 @@
 /**
- * Grand Sage Ren - Aether Elder NPC
+ * Rishi Vashistha - Brahmaand Rishi (Aether Sage) NPC
  * Location: Earth-3 South Sakura Highlands
  * Theme: Midnight Obsidian with Golden Inlays and Crimson Silk Cape
  */
 (function(global) {
   'use strict';
 
-  const GrandSageRen = {
-    id: 'npc_grand_sage_ren',
-    name: 'Grand Sage Ren',
-    title: 'Aether Elder',
+  const RishiVashistha = {
+    id: 'npc_rishi_vashistha',
+    name: 'Rishi Vashistha',
+    title: 'Brahmaand Mahaguru',
     realm: 'Earth-3',
-    dialogue: 'Honor the five Earths, for they are woven from single light.',
+    dialogue: 'Panch Prithviyon ka santulan hi is srishti ka mooladhar hai.',
     config: {
       armorCol: 0x1a1a24, // Midnight Obsidian
       trimCol: 0xffd166,  // Gold Inlays
@@ -24,8 +24,8 @@
     spawnPosition: { x: -22, z: -250 }
   };
 
-  global.NPC_GrandSageRen = GrandSageRen;
+  global.NPC_RishiVashistha = RishiVashistha;
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = GrandSageRen;
+    module.exports = RishiVashistha;
   }
 })(typeof window !== 'undefined' ? window : globalThis);

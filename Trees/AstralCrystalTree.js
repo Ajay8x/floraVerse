@@ -1,21 +1,21 @@
 /**
- * AstralCrystalTree.js
+ * Ratnavriksha (Astral Crystal Tree)
  * Location: Earth-5 East Astral Peak (X: 238, Z: -20)
- * Characteristic: Deep crystalline fractal tree formed from amethyst & quartz mineral spires
+ * Characteristic: Gemstone mineral tree formed from amethyst & quartz mineral spires
  */
 (function(global) {
   'use strict';
 
-  const AstralCrystalTree = {
-    id: 'astral_crystal_tree',
+  const RatnavrikshaTree = {
+    id: 'ratnavriksha_tree',
     entityId: 'TREE-004',
-    name: 'Astral Crystal Spire Tree',
+    name: 'Ratnavriksha Sphatik Tree',
     realm: 'Earth-5',
     category: 'MINERAL RESONANCE ARBOR',
-    species: 'Arbor Crystallus Amethystea',
+    species: 'Arbor Ratnavriksha Amethystea',
     height: '26.8 m',
     luminosity: '190,000 Lux',
-    desc: 'Crystalline resonance arbor growing amidst eastern mineral spires, pulsing cosmic frequencies.',
+    desc: 'Crystalline resonance tree growing amidst eastern mineral spires, pulsing cosmic frequencies.',
     spawnPosition: { x: 238, z: -20 },
     foliageColors: {
       violet: 0x9d4edd,
@@ -25,8 +25,9 @@
     trunkColor: 0x240046
   };
 
-  global.Tree_AstralCrystal = AstralCrystalTree;
+  global.Tree_Ratnavriksha = RatnavrikshaTree;
+  global.Tree_AstralCrystal = RatnavrikshaTree;
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AstralCrystalTree;
+    module.exports = RatnavrikshaTree;
   }
 })(typeof window !== 'undefined' ? window : globalThis);

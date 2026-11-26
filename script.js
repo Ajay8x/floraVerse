@@ -1503,22 +1503,22 @@ let playerPitch = 0; // Camera vertical look angle
 const earth3NPCs = [];
 const earth3Animals = [];
 
-// NPC Costumes with Distinct Armor Colors, Visors & Capes/Accents
+// NPC Costumes with Distinct Armor Colors, Visors & Capes/Accents (Indian Cultural & Futuristic Theme)
 const npcCostumes = [
   {
-    name: 'Ronin Kaelen',
-    title: 'Sakura Cyber Samurai',
+    name: 'Veer Vikram',
+    title: 'Sakura Cyber Yoddha',
     armorCol: 0x240046, // Deep Violet Armor
     trimCol: 0xff007f,  // Neon Magenta
     visorCol: 0x00f0ff, // Aqua Visor
-    capeCol: 0x7209b7,  // Cyber Kimono / Haori
+    capeCol: 0x7209b7,  // Cyber Angavastra / Cape
     coreCol: 0xff0055,
     hasCape: true,
     scale: 1.05
   },
   {
-    name: 'Botanist Aya',
-    title: 'Quantum Arborist',
+    name: 'Ananya',
+    title: 'Vanaspati Vaigyanik',
     armorCol: 0x0d3b66, // Cobalt Navy
     trimCol: 0x06d6a0,  // Mint Emerald
     visorCol: 0x52b788, // Emerald HUD
@@ -1528,8 +1528,8 @@ const npcCostumes = [
     scale: 0.95
   },
   {
-    name: 'Grand Sage Ren',
-    title: 'Aether Elder',
+    name: 'Rishi Vashistha',
+    title: 'Brahmaand Mahaguru',
     armorCol: 0x1a1a24, // Midnight Obsidian
     trimCol: 0xffd166,  // Gold Inlays
     visorCol: 0xffd166, // Golden Visor
@@ -1539,8 +1539,8 @@ const npcCostumes = [
     scale: 1.12
   },
   {
-    name: 'Scout Maya',
-    title: 'Neon Ranger',
+    name: 'Aarav',
+    title: 'Nakshatra Khoji',
     armorCol: 0x2b2d42, // Matte Charcoal
     trimCol: 0xff5400,  // Solar Flame Orange
     visorCol: 0xff0054, // Ruby Visor
@@ -1549,8 +1549,8 @@ const npcCostumes = [
     scale: 0.98
   },
   {
-    name: 'Guardian Jin',
-    title: 'Heavy Mecha Vanguard',
+    name: 'Ranveer',
+    title: 'Maharakshak Vanguard',
     armorCol: 0x0a1128, // Deep Abyssal Blue
     trimCol: 0x00b4d8,  // Cyan Plasma
     visorCol: 0x90e0ef, // Ice Cyan

@@ -1,21 +1,21 @@
 /**
- * SakuraSanctuaryTree.js
+ * Kalpavriksha (Sakura Sanctuary Tree)
  * Location: Earth-3 South Sakura Highlands (X: 0, Z: -240)
- * Characteristic: Giant fractal cherry blossom tree with bioluminescent petal clouds & curved trunk
+ * Characteristic: Divya Kalpavriksha with pink-golden bioluminescent petal clouds
  */
 (function(global) {
   'use strict';
 
-  const SakuraSanctuaryTree = {
-    id: 'sakura_sanctuary_tree',
+  const KalpavrikshaTree = {
+    id: 'kalpavriksha_tree',
     entityId: 'TREE-001',
-    name: 'Sakura Sanctuary Tree',
+    name: 'Divya Kalpavriksha (Sakura Tree)',
     realm: 'Earth-3',
-    category: 'FRACTAL ANCIENT ARBOR',
-    species: 'Prunus Aetheria Magna',
+    category: 'DIVYA ANCIENT ARBOR',
+    species: 'Prunus Kalpavriksha Magna',
     height: '24.5 m',
     luminosity: '142,000 Lux',
-    desc: 'An ancient branching cosmic cherry blossom tree that constantly sheds bioluminescent petals into the troposphere.',
+    desc: 'An ancient branching cosmic wish-fulfilling tree that constantly sheds bioluminescent petals into the troposphere.',
     spawnPosition: { x: 0, z: -240 },
     foliageColors: {
       pink: 0xff99c8,
@@ -32,8 +32,9 @@
     ]
   };
 
-  global.Tree_SakuraSanctuary = SakuraSanctuaryTree;
+  global.Tree_Kalpavriksha = KalpavrikshaTree;
+  global.Tree_SakuraSanctuary = KalpavrikshaTree;
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = SakuraSanctuaryTree;
+    module.exports = KalpavrikshaTree;
   }
 })(typeof window !== 'undefined' ? window : globalThis);

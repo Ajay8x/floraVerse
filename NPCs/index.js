@@ -1,17 +1,16 @@
 /**
- * NPCs and Fauna Barrel Export & Spawner Engine
- * Organizes all character entities into a structured registry
+ * NPCs and Fauna Barrel Export & Spawner Engine (Indian Characters)
  */
 (function(global) {
   'use strict';
 
   const NPCsRegistry = {
     characters: [
-      global.NPC_RoninKaelen,
-      global.NPC_BotanistAya,
-      global.NPC_GrandSageRen,
-      global.NPC_ScoutMaya,
-      global.NPC_GuardianJin
+      global.NPC_VeerVikram,
+      global.NPC_Ananya,
+      global.NPC_RishiVashistha,
+      global.NPC_Aarav,
+      global.NPC_Ranveer
     ].filter(Boolean),
 
     fauna: {

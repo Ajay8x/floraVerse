@@ -1,17 +1,17 @@
 /**
- * Guardian Jin - Heavy Mecha Vanguard NPC
+ * Ranveer - Maharakshak (Mecha Vanguard) NPC
  * Location: Earth-3 South Sakura Highlands
  * Theme: Abyssal Blue Heavy Plating with Ice Cyan Shield & Dual Core
  */
 (function(global) {
   'use strict';
 
-  const GuardianJin = {
-    id: 'npc_guardian_jin',
-    name: 'Guardian Jin',
-    title: 'Heavy Mecha Vanguard',
+  const Ranveer = {
+    id: 'npc_ranveer',
+    name: 'Ranveer',
+    title: 'Maharakshak Vanguard',
     realm: 'Earth-3',
-    dialogue: 'None shall disturb the peace of the Sakura Sanctuary.',
+    dialogue: 'Koi dushpravritti is pavitra van ke andar pravesh nahi kar sakti.',
     config: {
       armorCol: 0x0a1128, // Deep Abyssal Blue
       trimCol: 0x00b4d8,  // Cyan Plasma
@@ -24,8 +24,8 @@
     spawnPosition: { x: 0, z: -262 }
   };
 
-  global.NPC_GuardianJin = GuardianJin;
+  global.NPC_Ranveer = Ranveer;
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = GuardianJin;
+    module.exports = Ranveer;
   }
 })(typeof window !== 'undefined' ? window : globalThis);
