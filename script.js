@@ -187,125 +187,431 @@ function createCelestialSky() {
 createCelestialSky();
 
 // ========================================================
-// 4. VAST ULTRA-DENSE BIOLUMINESCENT TERRAIN (Expanded Multiverse Realm: 650m+)
+// 4. VAST ULTRA-DENSE BIOLUMINESCENT 5 EARTHS REALM (Central Earth + 4 Outer Earths)
 // ========================================================
 let terrainPointsMesh = null;
 function createVastTerrain() {
-  const count = 240000; // Ultra dense, massive open world
+  const count = 280000;
   const pos = new Float32Array(count * 3);
   const col = new Float32Array(count * 3);
 
-  const c1 = new THREE.Color(0x05ffa1); // Emerald moss
-  const c2 = new THREE.Color(0x00f0ff); // Electric cyan
-  const c3 = new THREE.Color(0x9d4edd); // Neon purple
-  const c4 = new THREE.Color(0xff2a6d); // Rose glow veins
-  const c5 = new THREE.Color(0xffbe0b); // Golden solar frontier
+  // 5 Earth Centers & Colors
+  const earthCenters = [
+    { x: 0, z: 0, rMax: 72, colHex: 0x05ffa1, altCol: 0x00f0ff },      // Earth-1 Central Core
+    { x: 0, z: 240, rMax: 62, colHex: 0x00f0ff, altCol: 0x0077ff },    // Earth-2 North Aqua Lotus
+    { x: 0, z: -240, rMax: 62, colHex: 0xff2a6d, altCol: 0x9d4edd },   // Earth-3 South Neon Sakura
+    { x: -250, z: 0, rMax: 62, colHex: 0xffbe0b, altCol: 0xff5500 },   // Earth-4 West Solaris Dunes
+    { x: 250, z: 0, rMax: 62, colHex: 0x9d4edd, altCol: 0xff2a6d }     // Earth-5 East Astral Peak
+  ];
 
-  for (let i = 0; i < count; i++) {
-    // 3 Layers: Central Core (80m), Outer Biomes (250m), Multiverse Outer Rim (600m)
-    let maxR;
-    const tier = i % 3;
-    if (tier === 0) maxR = 90;
-    else if (tier === 1) maxR = 260;
-    else maxR = 620;
+  const pointsPerPlanet = Math.floor(count / 5);
 
-    const r = Math.pow(Math.random(), 0.65) * maxR;
-    const th = Math.random() * Math.PI * 2;
-    const x = Math.cos(th) * r;
-    const z = Math.sin(th) * r;
+  let pIdx = 0;
+  earthCenters.forEach((ec, cIdx) => {
+    const cPrimary = new THREE.Color(ec.colHex);
+    const cSecondary = new THREE.Color(ec.altCol);
 
-    const y = getTerrainHeightAt(x, z);
+    for (let i = 0; i < pointsPerPlanet; i++) {
+      const radius = Math.pow(Math.random(), 0.6) * ec.rMax;
+      const angle = Math.random() * Math.PI * 2;
+      const px = ec.x + Math.cos(angle) * radius;
+      const pz = ec.z + Math.sin(angle) * radius;
+      const py = getTerrainHeightAt(px, pz);
 
-    pos[i * 3 + 0] = x;
-    pos[i * 3 + 1] = y;
-    pos[i * 3 + 2] = z;
+      pos[pIdx * 3 + 0] = px;
+      pos[pIdx * 3 + 1] = py;
+      pos[pIdx * 3 + 2] = pz;
 
-    // Rich color distribution matching biomes
-    const t = Math.min(1.0, r / 550);
-    let color;
-    if (t < 0.25) {
-      color = c1.clone().lerp(c2, t / 0.25);
-    } else if (t < 0.55) {
-      color = c2.clone().lerp(c3, (t - 0.25) / 0.3);
-    } else if (t < 0.8) {
-      color = c3.clone().lerp(c4, (t - 0.55) / 0.25);
-    } else {
-      color = c4.clone().lerp(c5, (t - 0.8) / 0.2);
+      const t = radius / ec.rMax;
+      const pointColor = cPrimary.clone().lerp(cSecondary, t);
+      if (Math.random() > 0.88) pointColor.addScalar(0.4);
+
+      col[pIdx * 3 + 0] = pointColor.r;
+      col[pIdx * 3 + 1] = pointColor.g;
+      col[pIdx * 3 + 2] = pointColor.b;
+      pIdx++;
     }
+  });
 
-    if (Math.random() > 0.88) {
-      color.addScalar(0.4);
-    }
-
-    col[i * 3 + 0] = color.r;
-    col[i * 3 + 1] = color.g;
-    col[i * 3 + 2] = color.b;
-  }
-
-  terrainPointsMesh = createPoints(pos, col, 0.34, 0.85);
+  terrainPointsMesh = createPoints(pos, col, 0.35, 0.88);
   worldGroup.add(terrainPointsMesh);
 }
 createVastTerrain();
 
 // ========================================================
-// 4.5 LUMINOUS HIGHWAYS & MULTIVERSE PATHWAYS (Connected Roads)
+// 4.5 CONNECTING ROADS (BRIDGES) & ARCHWAY ENTRY GATES
+// (Connecting Central Earth-1 to North, South, West, East Earths)
 // ========================================================
 function createLuminousPathways() {
-  const roadWaypoints = [
-    // Central Rose -> Lotus Lake
-    { from: [0, 0], to: [55, 30], color: 0x00f0ff },
-    // Central Rose -> Sakura Tree
-    { from: [0, 0], to: [-60, -35], color: 0xff2a6d },
-    // Central Rose -> Sunflower Valley
-    { from: [0, 0], to: [65, -50], color: 0xffbe0b },
-    // Central Rose -> Monolith
-    { from: [0, 0], to: [0, -65], color: 0x9d4edd },
-    // Central Rose -> Tulip Plateau
-    { from: [0, 0], to: [-50, 40], color: 0x05ffa1 },
-    // Highway to Multiverse Realm 2 (Outer Cosmic Void)
-    { from: [55, 30], to: [200, 160], color: 0x00f0ff },
-    // Highway to Multiverse Realm 3 (Astral Cyber Mountain)
-    { from: [-60, -35], to: [-220, -180], color: 0xff2a6d },
-    // Highway to Multiverse Realm 4 (Golden Solar Expanse)
-    { from: [65, -50], to: [240, -210], color: 0xffbe0b }
+  const connections = [
+    // North Road to Earth-2
+    { from: [0, 68], to: [0, 180], color: 0x00f0ff, gateAt: [0, 68], gateRot: 0 },
+    // South Road to Earth-3
+    { from: [0, -68], to: [0, -180], color: 0xff2a6d, gateAt: [0, -68], gateRot: Math.PI },
+    // West Road to Earth-4
+    { from: [-68, 0], to: [-190, 0], color: 0xffbe0b, gateAt: [-68, 0], gateRot: Math.PI / 2 },
+    // East Road to Earth-5
+    { from: [68, 0], to: [190, 0], color: 0x9d4edd, gateAt: [68, 0], gateRot: -Math.PI / 2 }
   ];
 
-  const totalPointsPerRoad = 1200;
-  roadWaypoints.forEach(rw => {
-    const pos = new Float32Array(totalPointsPerRoad * 3);
-    const col = new Float32Array(totalPointsPerRoad * 3);
-    const baseCol = new THREE.Color(rw.color);
+  connections.forEach(conn => {
+    // 1. Broad Glowing Road (8 meters wide highway)
+    const roadPoints = 3500;
+    const pos = new Float32Array(roadPoints * 3);
+    const col = new Float32Array(roadPoints * 3);
+    const baseCol = new THREE.Color(conn.color);
 
-    for (let i = 0; i < totalPointsPerRoad; i++) {
-      const alpha = i / totalPointsPerRoad;
-      const rx = rw.from[0] + (rw.to[0] - rw.from[0]) * alpha;
-      const rz = rw.from[1] + (rw.to[1] - rw.from[1]) * alpha;
-      
-      // Road width dispersion (3.5 meters wide glowing trail)
-      const perpAngle = Math.atan2(rw.to[1] - rw.from[1], rw.to[0] - rw.from[0]) + Math.PI / 2;
-      const widthOffset = (Math.random() - 0.5) * 3.8;
-      const px = rx + Math.cos(perpAngle) * widthOffset;
-      const pz = rz + Math.sin(perpAngle) * widthOffset;
-      const py = getTerrainHeightAt(px, pz) + 0.12;
+    for (let i = 0; i < roadPoints; i++) {
+      const alpha = i / roadPoints;
+      const rx = conn.from[0] + (conn.to[0] - conn.from[0]) * alpha;
+      const rz = conn.from[1] + (conn.to[1] - conn.from[1]) * alpha;
+
+      const isHorizontal = Math.abs(conn.to[0] - conn.from[0]) > Math.abs(conn.to[1] - conn.from[1]);
+      let px, pz;
+      if (isHorizontal) {
+        px = rx;
+        pz = rz + (Math.random() - 0.5) * 8.0;
+      } else {
+        px = rx + (Math.random() - 0.5) * 8.0;
+        pz = rz;
+      }
+
+      const py = -1.95;
 
       pos[i * 3 + 0] = px;
       pos[i * 3 + 1] = py;
       pos[i * 3 + 2] = pz;
 
-      const c = baseCol.clone().addScalar(Math.random() * 0.35);
+      const c = baseCol.clone().addScalar(Math.random() * 0.3);
       col[i * 3 + 0] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     }
+    worldGroup.add(createPoints(pos, col, 0.42, 0.95));
 
-    const roadMesh = createPoints(pos, col, 0.42, 0.95);
-    worldGroup.add(roadMesh);
+    // Road Edge Guardrails (Glowing Light Lines on both sides)
+    const isHorizontal = Math.abs(conn.to[0] - conn.from[0]) > Math.abs(conn.to[1] - conn.from[1]);
+    const railOffset = 4.2;
+    [-railOffset, railOffset].forEach(offset => {
+      const railPoints = 600;
+      const rPos = new Float32Array(railPoints * 3);
+      const rCol = new Float32Array(railPoints * 3);
+      for (let j = 0; j < railPoints; j++) {
+        const a = j / railPoints;
+        const rx = conn.from[0] + (conn.to[0] - conn.from[0]) * a;
+        const rz = conn.from[1] + (conn.to[1] - conn.from[1]) * a;
+        rPos[j * 3 + 0] = isHorizontal ? rx : rx + offset;
+        rPos[j * 3 + 1] = -1.75;
+        rPos[j * 3 + 2] = isHorizontal ? rz + offset : rz;
+        rCol[j * 3 + 0] = baseCol.r; rCol[j * 3 + 1] = baseCol.g; rCol[j * 3 + 2] = baseCol.b;
+      }
+      worldGroup.add(createPoints(rPos, rCol, 0.55, 1.0));
+    });
+
+    // 2. Cyberpunk Entry Gate (Archway Gate at the road entrance)
+    const gateGroup = new THREE.Group();
+    gateGroup.position.set(conn.gateAt[0], -2.0, conn.gateAt[1]);
+    gateGroup.rotation.y = conn.gateRot;
+
+    // Gate Pillars
+    const pillarGeo = new THREE.BoxGeometry(1.6, 9.5, 1.6);
+    const pillarMat = new THREE.MeshStandardMaterial({
+      color: 0x0a1020,
+      metalness: 0.9,
+      roughness: 0.15,
+      emissive: 0x020815
+    });
+
+    const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
+    leftPillar.position.set(-4.5, 4.75, 0);
+    gateGroup.add(leftPillar);
+
+    const rightPillar = new THREE.Mesh(pillarGeo, pillarMat);
+    rightPillar.position.set(4.5, 4.75, 0);
+    gateGroup.add(rightPillar);
+
+    // Gate Luminous Top Beam
+    const beamGeo = new THREE.BoxGeometry(11.0, 1.8, 1.8);
+    const beamMat = new THREE.MeshStandardMaterial({
+      color: 0x0a1020,
+      metalness: 0.9,
+      roughness: 0.15,
+      emissive: 0x020815
+    });
+    const topBeam = new THREE.Mesh(beamGeo, beamMat);
+    topBeam.position.set(0, 9.5, 0);
+    gateGroup.add(topBeam);
+
+    // Glowing Neon Portal Arch Edges
+    const gateEdgeMat = new THREE.LineBasicMaterial({ color: conn.color, linewidth: 3 });
+    const bLines = new THREE.LineSegments(new THREE.EdgesGeometry(beamGeo), gateEdgeMat);
+    topBeam.add(bLines);
+    leftPillar.add(new THREE.LineSegments(new THREE.EdgesGeometry(pillarGeo), gateEdgeMat));
+    rightPillar.add(new THREE.LineSegments(new THREE.EdgesGeometry(pillarGeo), gateEdgeMat));
+
+    // Luminous Energy Gateway Shield inside arch
+    const shieldGeo = new THREE.PlaneGeometry(8.0, 8.5);
+    const shieldMat = new THREE.MeshBasicMaterial({
+      color: conn.color,
+      transparent: true,
+      opacity: 0.3,
+      side: THREE.DoubleSide
+    });
+    const shield = new THREE.Mesh(shieldGeo, shieldMat);
+    shield.position.set(0, 4.75, 0);
+    gateGroup.add(shield);
+
+    worldGroup.add(gateGroup);
   });
 }
 createLuminousPathways();
 
 // ========================================================
-// 5. LANDMARKS & PROCEDURAL ARCHITECTURE
+// 5. LANDMARKS, PROCEDURAL FLORA & MONUMENTAL ARCHITECTURE
 // ========================================================
 const landmarks = [];
+
+// ========================================================
+// 5.0 FOUR NEW GIANT MONUMENTAL FLOWERS (SITUATED AROUND CENTRAL ROSE IN EARTH-1)
+// 1. Quantum Cyan Orchid (North-East)
+// 2. Solar Golden Dahlia (South-East)
+// 3. Violet Plasma Hibiscus (South-West)
+// 4. Emerald Astral Bellflower (North-West)
+// ========================================================
+
+// 1. Quantum Cyan Orchid
+function spawnCyanOrchid(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  const count = 26000;
+  const pos = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+  const c1 = new THREE.Color(0x00f0ff);
+  const c2 = new THREE.Color(0x0055ff);
+
+  for (let i = 0; i < count; i++) {
+    const u = Math.pow(Math.random(), 0.7);
+    const v = Math.random() * Math.PI * 6; // 3 large orchid flared petals
+    const petalWarp = (1 + 0.45 * Math.sin(3 * v));
+    const r = u * 9.5 * petalWarp;
+    const y = 14.0 + Math.pow(u, 1.3) * 7.5 - Math.sin(r * 0.4) * 2.2;
+
+    pos[i * 3 + 0] = r * Math.cos(v);
+    pos[i * 3 + 1] = y;
+    pos[i * 3 + 2] = r * Math.sin(v);
+
+    const c = c1.clone().lerp(c2, u);
+    if (Math.random() > 0.85) c.addScalar(0.35);
+    col[i * 3 + 0] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+  }
+  g.add(createPoints(pos, col, 0.38));
+
+  // Glowing stem
+  const sPos = new Float32Array(5000 * 3), sCol = new Float32Array(5000 * 3);
+  for (let i = 0; i < 5000; i++) {
+    const t = Math.random();
+    sPos[i * 3 + 0] = (Math.random() - 0.5) * 0.9;
+    sPos[i * 3 + 1] = -2.0 + t * 16.0;
+    sPos[i * 3 + 2] = (Math.random() - 0.5) * 0.9;
+    sCol[i * 3 + 0] = 0.05; sCol[i * 3 + 1] = 0.85; sCol[i * 3 + 2] = 0.95;
+  }
+  g.add(createPoints(sPos, sCol, 0.28));
+
+  g.userData = {
+    id: 'orchid_cyan',
+    entityId: 'FLOR-ORC1',
+    name: 'Quantum Cyan Orchid',
+    species: 'Orchis Cyanea Quantum',
+    category: 'PRIMARY BOTANICAL CORE',
+    luminosity: '135,000 LUX',
+    height: '21 METERS',
+    desc: 'Luminous triple-winged cyan orchid resonating with quantum harmonic frequencies.',
+    camPos: { x: x + 16, y: 22, z: z + 24 },
+    lookAt: { x: x, y: 14, z: z }
+  };
+  g.add(create3DNameBadge('FLOR-ORC1', 'Quantum Cyan Orchid', 23));
+  addLandmarkHitbox(g, 9.5, 24);
+  worldGroup.add(g);
+  landmarks.push(g);
+}
+
+// 2. Solar Golden Dahlia
+function spawnGoldenDahlia(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  const count = 28000;
+  const pos = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+  const c1 = new THREE.Color(0xffbe0b);
+  const c2 = new THREE.Color(0xff5500);
+
+  for (let i = 0; i < count; i++) {
+    const u = Math.pow(Math.random(), 0.65);
+    const v = Math.random() * Math.PI * 18;
+    // Multi-layered star pointed geometric dahlia
+    const starWarp = 1 + 0.35 * Math.sin(12 * v + u * 6);
+    const r = u * 9.2 * starWarp;
+    const y = 14.5 + Math.sin(u * Math.PI * 0.8) * 6.0;
+
+    pos[i * 3 + 0] = r * Math.cos(v);
+    pos[i * 3 + 1] = y;
+    pos[i * 3 + 2] = r * Math.sin(v);
+
+    const c = c1.clone().lerp(c2, u);
+    if (Math.random() > 0.8) c.addScalar(0.4);
+    col[i * 3 + 0] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+  }
+  g.add(createPoints(pos, col, 0.38));
+
+  // Stem
+  const sPos = new Float32Array(5000 * 3), sCol = new Float32Array(5000 * 3);
+  for (let i = 0; i < 5000; i++) {
+    const t = Math.random();
+    sPos[i * 3 + 0] = (Math.random() - 0.5) * 0.9;
+    sPos[i * 3 + 1] = -2.0 + t * 16.0;
+    sPos[i * 3 + 2] = (Math.random() - 0.5) * 0.9;
+    sCol[i * 3 + 0] = 0.9; sCol[i * 3 + 1] = 0.6; sCol[i * 3 + 2] = 0.05;
+  }
+  g.add(createPoints(sPos, sCol, 0.28));
+
+  g.userData = {
+    id: 'dahlia_solar',
+    entityId: 'FLOR-DAH2',
+    name: 'Solar Golden Dahlia',
+    species: 'Dahlia Solaris Fulva',
+    category: 'PRIMARY BOTANICAL CORE',
+    luminosity: '150,000 LUX',
+    height: '21 METERS',
+    desc: 'Dense multi-layered solar dahlia glowing with warm stellar radiation.',
+    camPos: { x: x + 16, y: 22, z: z + 24 },
+    lookAt: { x: x, y: 14, z: z }
+  };
+  g.add(create3DNameBadge('FLOR-DAH2', 'Solar Golden Dahlia', 23));
+  addLandmarkHitbox(g, 9.5, 24);
+  worldGroup.add(g);
+  landmarks.push(g);
+}
+
+// 3. Violet Plasma Hibiscus
+function spawnPlasmaHibiscus(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  const count = 26000;
+  const pos = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+  const c1 = new THREE.Color(0x9d4edd);
+  const c2 = new THREE.Color(0xff2a6d);
+
+  for (let i = 0; i < count; i++) {
+    const u = Math.pow(Math.random(), 0.7);
+    const v = Math.random() * Math.PI * 10; // 5 flared wide petals
+    const petalWarp = 1 + 0.3 * Math.sin(5 * v);
+    const r = u * 9.6 * petalWarp;
+    const y = 14.0 + Math.pow(u, 1.2) * 8.0 - (r / 9.0) * 2.0;
+
+    pos[i * 3 + 0] = r * Math.cos(v);
+    pos[i * 3 + 1] = y;
+    pos[i * 3 + 2] = r * Math.sin(v);
+
+    const c = c1.clone().lerp(c2, u);
+    if (Math.random() > 0.85) c.addScalar(0.35);
+    col[i * 3 + 0] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+  }
+  g.add(createPoints(pos, col, 0.38));
+
+  // Central Stamen Beam
+  const stamenPos = new Float32Array(1500 * 3), stamenCol = new Float32Array(1500 * 3);
+  for (let i = 0; i < 1500; i++) {
+    const st = Math.random();
+    stamenPos[i * 3 + 0] = (Math.random() - 0.5) * 0.4;
+    stamenPos[i * 3 + 1] = 14.0 + st * 9.0;
+    stamenPos[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
+    stamenCol[i * 3 + 0] = 1.0; stamenCol[i * 3 + 1] = 0.85; stamenCol[i * 3 + 2] = 0.1;
+  }
+  g.add(createPoints(stamenPos, stamenCol, 0.45));
+
+  // Stem
+  const sPos = new Float32Array(5000 * 3), sCol = new Float32Array(5000 * 3);
+  for (let i = 0; i < 5000; i++) {
+    const t = Math.random();
+    sPos[i * 3 + 0] = (Math.random() - 0.5) * 0.9;
+    sPos[i * 3 + 1] = -2.0 + t * 16.0;
+    sPos[i * 3 + 2] = (Math.random() - 0.5) * 0.9;
+    sCol[i * 3 + 0] = 0.6; sCol[i * 3 + 1] = 0.1; sCol[i * 3 + 2] = 0.9;
+  }
+  g.add(createPoints(sPos, sCol, 0.28));
+
+  g.userData = {
+    id: 'hibiscus_plasma',
+    entityId: 'FLOR-HIB3',
+    name: 'Violet Plasma Hibiscus',
+    species: 'Hibiscus Nebularis Plasma',
+    category: 'PRIMARY BOTANICAL CORE',
+    luminosity: '142,000 LUX',
+    height: '23 METERS',
+    desc: 'Spreading 5-petal plasma hibiscus with high-energy golden core stamen.',
+    camPos: { x: x + 16, y: 22, z: z + 24 },
+    lookAt: { x: x, y: 14, z: z }
+  };
+  g.add(create3DNameBadge('FLOR-HIB3', 'Violet Plasma Hibiscus', 23));
+  addLandmarkHitbox(g, 9.5, 24);
+  worldGroup.add(g);
+  landmarks.push(g);
+}
+
+// 4. Emerald Astral Bellflower
+function spawnAstralBellflower(x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  const count = 26000;
+  const pos = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+  const c1 = new THREE.Color(0x05ffa1);
+  const c2 = new THREE.Color(0x00f0ff);
+
+  for (let i = 0; i < count; i++) {
+    const u = Math.pow(Math.random(), 0.75);
+    const v = Math.random() * Math.PI * 14;
+    // Downward curved bell shape
+    const r = u * 9.0 * (1 + 0.25 * Math.sin(5 * v));
+    const y = 21.0 - Math.pow(u, 1.4) * 8.5;
+
+    pos[i * 3 + 0] = r * Math.cos(v);
+    pos[i * 3 + 1] = y;
+    pos[i * 3 + 2] = r * Math.sin(v);
+
+    const c = c1.clone().lerp(c2, u);
+    if (Math.random() > 0.85) c.addScalar(0.35);
+    col[i * 3 + 0] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+  }
+  g.add(createPoints(pos, col, 0.38));
+
+  // Stem arch
+  const sPos = new Float32Array(5000 * 3), sCol = new Float32Array(5000 * 3);
+  for (let i = 0; i < 5000; i++) {
+    const t = Math.random();
+    sPos[i * 3 + 0] = Math.sin(t * Math.PI * 0.4) * 1.5;
+    sPos[i * 3 + 1] = -2.0 + t * 23.0;
+    sPos[i * 3 + 2] = (Math.random() - 0.5) * 0.9;
+    sCol[i * 3 + 0] = 0.05; sCol[i * 3 + 1] = 0.95; sCol[i * 3 + 2] = 0.55;
+  }
+  g.add(createPoints(sPos, sCol, 0.28));
+
+  g.userData = {
+    id: 'bellflower_astral',
+    entityId: 'FLOR-BEL4',
+    name: 'Emerald Astral Bellflower',
+    species: 'Campanula Astralis Nova',
+    category: 'PRIMARY BOTANICAL CORE',
+    luminosity: '138,000 LUX',
+    height: '22 METERS',
+    desc: 'Towering hanging bellflower that casts cascading emerald photons downward.',
+    camPos: { x: x + 16, y: 22, z: z + 24 },
+    lookAt: { x: x, y: 14, z: z }
+  };
+  g.add(create3DNameBadge('FLOR-BEL4', 'Emerald Astral Bellflower', 23));
+  addLandmarkHitbox(g, 9.5, 24);
+  worldGroup.add(g);
+  landmarks.push(g);
+}
 
 // A. Towering Crimson Rose Grove
 function spawnRoseLandmark(x, z) {
@@ -787,13 +1093,21 @@ function spawnTulipPlateau(x, z) {
   landmarks.push(g);
 }
 
-// Spawn all landmarks in the open world
-spawnRoseLandmark(0, 0);          // Center
-spawnLotusLake(55, 30);           // East Lake
-spawnSakuraTree(-60, -35);        // Northwest Sanctuary
-spawnSunflowerValley(65, -50);    // Northeast Valley
-spawnCrystalMonolith(0, -65);     // North Peak
-spawnTulipPlateau(-50, 40);       // Southwest Plateau
+// Spawn all landmarks across their corresponding Earths
+spawnRoseLandmark(0, 0);          // Earth-1 Center (Primary Crimson Rose)
+
+// Four Giant Flowers around Central Rose in Earth-1 (Matching user's diagram)
+spawnCyanOrchid(34, 34);          // North-East quadrant (X: +34, Z: +34)
+spawnGoldenDahlia(34, -34);        // South-East quadrant (X: +34, Z: -34)
+spawnPlasmaHibiscus(-34, -34);     // South-West quadrant (X: -34, Z: -34)
+spawnAstralBellflower(-34, 34);    // North-West quadrant (X: -34, Z: +34)
+
+// 4 Outer Earth World Centers
+spawnLotusLake(0, 240);           // Earth-2 North Lotus Ocean
+spawnSakuraTree(0, -240);         // Earth-3 South Sakura Highlands
+spawnSunflowerValley(-250, 0);    // Earth-4 West Solaris Valley
+spawnCrystalMonolith(250, 0);     // Earth-5 East Astral Peak
+spawnTulipPlateau(-35, 30);       // Earth-1 Plateau
 
 // ========================================================
 // 5.1 MULTIVERSE REALM PORTALS (Outer Dimensional Gateways)
@@ -1086,39 +1400,39 @@ const pollenMesh = new THREE.Points(pollenGeo, new THREE.PointsMaterial({
 worldGroup.add(pollenMesh);
 
 // ========================================================
-// 5.5 PLAYER CHARACTER (3D PLACEHOLDER BOX WITH CYBER VISOR)
+// 5.5 PLAYER CHARACTER (3D CYBER MECHA AVATAR BOX - ENLARGED)
 // ========================================================
 const playerGroup = new THREE.Group();
 
-// Main body box (Character placeholder)
-const bodyGeo = new THREE.BoxGeometry(1.6, 2.4, 1.2);
+// Main body box (Larger, more heroic mecha proportions: 3.2m wide, 4.8m tall, 2.4m deep)
+const bodyGeo = new THREE.BoxGeometry(3.2, 4.8, 2.4);
 const bodyMat = new THREE.MeshStandardMaterial({
   color: 0x0e1726,
-  metalness: 0.8,
-  roughness: 0.2,
+  metalness: 0.85,
+  roughness: 0.18,
   emissive: 0x050f1f,
-  emissiveIntensity: 0.4
+  emissiveIntensity: 0.5
 });
 const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-bodyMesh.position.y = 1.2;
+bodyMesh.position.y = 2.4;
 playerGroup.add(bodyMesh);
 
 // Glowing Neon Edges
 const edgeGeo = new THREE.EdgesGeometry(bodyGeo);
-const edgeMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, linewidth: 2 });
+const edgeMat = new THREE.LineBasicMaterial({ color: 0x00f0ff, linewidth: 3 });
 const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
 bodyMesh.add(edgeLines);
 
 // Cyber Visor / Head indicator (Shows facing direction like PUBG)
-const visorGeo = new THREE.BoxGeometry(1.1, 0.45, 0.4);
+const visorGeo = new THREE.BoxGeometry(2.2, 0.85, 0.8);
 const visorMat = new THREE.MeshBasicMaterial({ color: 0xff2a6d });
 const visorMesh = new THREE.Mesh(visorGeo, visorMat);
-visorMesh.position.set(0, 1.8, -0.62); // Facing front (-Z)
+visorMesh.position.set(0, 3.6, -1.25); // Facing front (-Z)
 playerGroup.add(visorMesh);
 
 // Soft shadow/beacon ring beneath player
-const ringGeo = new THREE.RingGeometry(0.8, 1.2, 24);
-const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+const ringGeo = new THREE.RingGeometry(1.6, 2.4, 32);
+const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.65 });
 const ringMesh = new THREE.Mesh(ringGeo, ringMat);
 ringMesh.rotation.x = Math.PI / 2;
 ringMesh.position.y = 0.05;
@@ -1147,11 +1461,55 @@ const keys = {
 };
 
 // Calculate exact ground elevation at player (x, z)
+// Calculate exact ground elevation across 5 Connected Earth Worlds + Highways
 function getTerrainHeightAt(x, z) {
-  const hill1 = Math.sin(x * 0.035) * Math.cos(z * 0.035) * 4.8;
-  const hill2 = Math.sin(x * 0.07 + z * 0.05) * 2.2;
-  const micro = Math.sin(x * 0.15) * 0.4;
-  return hill1 + hill2 + micro - 2.0;
+  // 1. Central Earth-1 (Prime Core: (0, 0), radius: 85)
+  const dCentral = Math.hypot(x, z);
+  if (dCentral < 75) {
+    const hill = Math.sin(x * 0.04) * Math.cos(z * 0.04) * 2.0;
+    return -2.0 + hill;
+  }
+
+  // 2. North Earth-2 (Lotus Ocean World: (0, 240), radius: 70)
+  const dNorth = Math.hypot(x, z - 240);
+  if (dNorth < 65) {
+    const wave = Math.sin(x * 0.05 + z * 0.05) * 1.5;
+    return -2.0 + wave;
+  }
+
+  // 3. South Earth-3 (Neon Sakura Highlands: (0, -240), radius: 70)
+  const dSouth = Math.hypot(x, z + 240);
+  if (dSouth < 65) {
+    const cliff = Math.sin(x * 0.06) * 3.5 + Math.cos(z * 0.06) * 3.0;
+    return -1.0 + cliff;
+  }
+
+  // 4. West Earth-4 (Solaris Crystal Dunes: (-250, 0), radius: 70)
+  const dWest = Math.hypot(x + 250, z);
+  if (dWest < 65) {
+    const dunes = Math.sin(x * 0.05) * Math.cos(z * 0.05) * 2.5;
+    return -2.0 + dunes;
+  }
+
+  // 5. East Earth-5 (Astral Cosmic Peak: (250, 0), radius: 70)
+  const dEast = Math.hypot(x - 250, z);
+  if (dEast < 65) {
+    const peak = 4.0 - (dEast / 65) * 4.0 + Math.sin(x * 0.08 + z * 0.08) * 2.0;
+    return -2.0 + peak;
+  }
+
+  // 6. Connecting Cosmic Highways / Bridges (Between Earth-1 and 4 Outer Earths)
+  // North Highway: x between -8 and +8, z between 65 and 180
+  if (Math.abs(x) < 8.5 && z > 60 && z < 185) return -2.0;
+  // South Highway: x between -8 and +8, z between -185 and -60
+  if (Math.abs(x) < 8.5 && z > -185 && z < -60) return -2.0;
+  // West Highway: z between -8 and +8, x between -195 and -65
+  if (Math.abs(z) < 8.5 && x > -195 && x < -65) return -2.0;
+  // East Highway: z between -8 and +8, x between 65 and 195
+  if (Math.abs(z) < 8.5 && x > 65 && x < 195) return -2.0;
+
+  // Space void below
+  return -2.0;
 }
 
 window.addEventListener('keydown', (e) => {
@@ -1656,9 +2014,9 @@ function animate() {
     }
     playerGroup.position.y += velocity.y * delta;
 
-    // 2. 3rd-Person Follow Camera (Like PUBG: Camera behind player looking forward)
-    const cameraDistance = 8.5;
-    const cameraHeight = 3.5 + playerPitch * 4.0;
+    // 2. 3rd-Person Follow Camera (Scaled for larger character box)
+    const cameraDistance = 14.0;
+    const cameraHeight = 6.0 + playerPitch * 5.0;
     const camTargetX = playerGroup.position.x + Math.sin(playerRotationY) * cameraDistance;
     const camTargetZ = playerGroup.position.z + Math.cos(playerRotationY) * cameraDistance;
     const camTargetY = playerGroup.position.y + cameraHeight;
@@ -1668,8 +2026,8 @@ function animate() {
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, camTargetY, 0.15);
     camera.position.z = THREE.MathUtils.lerp(camera.position.z, camTargetZ, 0.15);
 
-    // Look at player chest/head
-    camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1.8, playerGroup.position.z);
+    // Look at player center
+    camera.lookAt(playerGroup.position.x, playerGroup.position.y + 3.2, playerGroup.position.z);
   } else if (currentMode === 'fly') {
     flyAngle += 0.004;
     const r = 90 + Math.sin(flyAngle * 2) * 20;
@@ -2443,4 +2801,104 @@ document.addEventListener('fullscreenchange', () => {
   } else {
     if (fsIcon) fsIcon.className = 'fa-solid fa-expand';
   }
+});
+
+// ========================================================
+// 15. 5 CONNECTED MULTIVERSE EARTH REALMS (Matching User Layout Diagram)
+// ========================================================
+const earthRealms = {
+  '1': {
+    name: 'Earth-1: Central Core',
+    camPos: { x: 0, y: 45, z: 110 },
+    lookAt: { x: 0, y: 8, z: 0 },
+    playerSpawn: { x: 0, z: 15 },
+    fogColor: 0x06030c,
+    lightColor: 0x9d4edd,
+    description: 'The Prime Central Earth with Crimson Rose, central plaza and 4 Gateways leading to outer Earths.'
+  },
+  '2': {
+    name: 'Earth-2: North Aqua Ocean',
+    camPos: { x: 0, y: 40, z: 320 },
+    lookAt: { x: 0, y: 8, z: 240 },
+    playerSpawn: { x: 0, z: 240 },
+    fogColor: 0x01131e,
+    lightColor: 0x00f0ff,
+    description: 'Northern aquatic paradise reached through the North Cyber Gate and luminous highway.'
+  },
+  '3': {
+    name: 'Earth-3: South Sakura Highlands',
+    camPos: { x: 0, y: 40, z: -160 },
+    lookAt: { x: 0, y: 8, z: -240 },
+    playerSpawn: { x: 0, z: -240 },
+    fogColor: 0x1f0618,
+    lightColor: 0xff2a6d,
+    description: 'Southern mountain sanctuary blooming with quantum cherry blossom trees.'
+  },
+  '4': {
+    name: 'Earth-4: West Solaris Valley',
+    camPos: { x: -170, y: 40, z: 0 },
+    lookAt: { x: -250, y: 8, z: 0 },
+    playerSpawn: { x: -250, z: 0 },
+    fogColor: 0x1a1202,
+    lightColor: 0xffbe0b,
+    description: 'Western golden solar valley reached via the West Gate and golden bridge.'
+  },
+  '5': {
+    name: 'Earth-5: East Astral Peak',
+    camPos: { x: 170, y: 40, z: 0 },
+    lookAt: { x: 250, y: 8, z: 0 },
+    playerSpawn: { x: 250, z: 0 },
+    fogColor: 0x0f0322,
+    lightColor: 0x9d4edd,
+    description: 'Eastern crystal spire monolith continent connected via the East Astral Gate.'
+  }
+};
+
+let activeEarth = '1';
+
+function switchEarthRealm(earthId) {
+  const realm = earthRealms[earthId];
+  if (!realm) return;
+
+  activeEarth = earthId;
+
+  // Highlight active chip
+  document.querySelectorAll('.earth-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.getAttribute('data-earth') === earthId);
+  });
+
+  // Smooth atmospheric transition
+  scene.fog.color.setHex(realm.fogColor);
+  hemiLight.color.setHex(realm.lightColor);
+
+  // If in walk mode, move character directly to the new Earth's spawn zone
+  if (currentMode === 'walk') {
+    const sx = realm.playerSpawn.x;
+    const sz = realm.playerSpawn.z;
+    const sy = getTerrainHeightAt(sx, sz);
+    playerGroup.position.set(sx, sy, sz);
+    camera.position.set(sx, sy + 6.0, sz + 14.0);
+    camera.lookAt(sx, sy + 3.2, sz);
+  } else {
+    // In Orbit mode, smoothly fly camera to the new Earth realm
+    new TWEEN.Tween(camera.position)
+      .to(realm.camPos, 1600)
+      .easing(TWEEN.Easing.Cubic.InOut)
+      .start();
+
+    new TWEEN.Tween(orbitControls.target)
+      .to(realm.lookAt, 1600)
+      .easing(TWEEN.Easing.Cubic.InOut)
+      .start();
+  }
+
+  showToast(`🚀 Teleported to ${realm.name}`);
+}
+
+// Bind earth selector buttons
+document.querySelectorAll('.earth-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const eid = btn.getAttribute('data-earth');
+    switchEarthRealm(eid);
+  });
 });
