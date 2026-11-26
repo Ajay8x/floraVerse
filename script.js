@@ -2028,8 +2028,10 @@ function animate() {
         const roadAngle = Math.atan2(dx, dz);
         playerGroup.position.x += Math.sin(roadAngle) * autoRunSpeed * delta;
         playerGroup.position.z += Math.cos(roadAngle) * autoRunSpeed * delta;
+
+        // Front Visor points exactly in the direction of running
         playerGroup.rotation.y = THREE.MathUtils.lerp(playerGroup.rotation.y, roadAngle + Math.PI, 0.25);
-        playerRotationY = THREE.MathUtils.lerp(playerRotationY, roadAngle, 0.15);
+        playerRotationY = THREE.MathUtils.lerp(playerRotationY, roadAngle + Math.PI, 0.2);
 
         // Smooth running limb animation
         const runTime = time * 13.0;
@@ -2044,7 +2046,7 @@ function animate() {
         autoRunTarget = null;
         if (autoRunEarthId) {
           switchEarthRealm(autoRunEarthId);
-          showToast(`⚡ Welcome to ${earthRealms[autoRunEarthId].name}!`);
+          showToast(`🌍 Welcome Earth ${autoRunEarthId}!`);
         }
       }
     } else {
