@@ -101,26 +101,6 @@
       </div>
     </header>
 
-    <!-- Babylon.js Mini Drone Picture-in-Picture Viewport (Toggleable) -->
-    <div id="babylon-drone-panel" class="drone-pip-box hidden">
-      <div class="drone-pip-header">
-        <span>🛰️ BABYLON.JS SENSOR CAM</span>
-        <button id="btn-close-drone" class="drone-pip-close">✕</button>
-      </div>
-      <canvas id="babylon-canvas"></canvas>
-    </div>
-
-    <!-- Spline 3D Cosmic Core Artifact Modal (Toggleable) -->
-    <div id="spline-modal-panel" class="spline-modal-box hidden">
-      <div class="spline-modal-header">
-        <span>🌌 SPLINE 3D COSMIC ARTIFACT</span>
-        <button id="btn-close-spline" class="drone-pip-close">✕</button>
-      </div>
-      <div class="spline-embed-wrapper">
-        <spline-viewer url="https://prod.spline.design/6Wq1Q7YGyM-iab9i/scene.splinecode"></spline-viewer>
-      </div>
-    </div>
-
     <!-- HUD: Minimap (Radar) -->
     <div class="radar-container">
       <div class="radar-header">TERRAIN RADAR</div>
@@ -155,24 +135,8 @@
       <i class="fa-solid fa-gamepad"></i> Modes
     </button>
 
-    <!-- Right Quick Actions Bar (With 5 Next-Level Features + Tech Toggles) -->
+    <!-- Right Quick Actions Bar (Photo Capture & Day/Night Sky Mode) -->
     <div class="floating-toolbox">
-      <button id="btn-toggle-drone" class="tool-btn" title="Babylon.js Drone Sensor Cam">
-        <i class="fa-solid fa-satellite-dish t-emoji"></i>
-        <span class="t-tip">Babylon</span>
-      </button>
-      <button id="btn-toggle-spline" class="tool-btn" title="Spline 3D Cosmic Artifact">
-        <i class="fa-solid fa-cube t-emoji"></i>
-        <span class="t-tip">Spline</span>
-      </button>
-      <button id="btn-plant-flower" class="tool-btn" title="🌱 Creative Mode: Click Ground to Plant Flowers">
-        <i class="fa-solid fa-seedling t-emoji"></i>
-        <span class="t-tip">Planting</span>
-      </button>
-      <button id="btn-meteor-rain" class="tool-btn" title="🌠 Meteor Showers & Aurora Rain">
-        <i class="fa-solid fa-meteor t-emoji"></i>
-        <span class="t-tip">Meteors</span>
-      </button>
       <button id="btn-photo-mode" class="tool-btn" title="📸 4K Cinematic Photo Mode">
         <i class="fa-solid fa-camera t-emoji"></i>
         <span class="t-tip">Capture</span>
@@ -181,34 +145,10 @@
         <i class="fa-solid fa-circle-half-stroke t-emoji"></i>
         <span class="t-tip">Sky Mode</span>
       </button>
-      <button id="btn-flower-burst" class="tool-btn" title="Trigger Macro Floral Energy Bloom">
-        <i class="fa-solid fa-burst t-emoji"></i>
-        <span class="t-tip">Super Bloom</span>
-      </button>
-      <button id="btn-zoom-inspect" class="tool-btn" title="Macro Inspection Zoom">
-        <i class="fa-solid fa-magnifying-glass-plus t-emoji"></i>
-        <span class="t-tip">Macro Zoom</span>
-      </button>
-      <button id="btn-toggle-codex" class="tool-btn" title="🎒 Botanical Codex & Seed Inventory">
-        <i class="fa-solid fa-book-bookmark t-emoji"></i>
-        <span class="t-tip">Codex</span>
-      </button>
-      <button id="btn-emote-wave" class="tool-btn" title="👋 Emote: Cyber Namaste / Wave">
-        <i class="fa-solid fa-hand-sparkles t-emoji"></i>
-        <span class="t-tip">Namaste</span>
-      </button>
-      <button id="btn-emote-meditate" class="tool-btn" title="🧘 Emote: Meditation Stance">
-        <i class="fa-solid fa-om t-emoji"></i>
-        <span class="t-tip">Meditate</span>
-      </button>
-      <button id="btn-open-terminal" class="tool-btn" title="Lenis Smooth Code Inspector">
-        <i class="fa-solid fa-terminal t-emoji"></i>
-        <span class="t-tip">Code Term</span>
-      </button>
     </div>
 
-    <!-- PUBG Mobile Touch Thumbsticks (Appears on touch / mobile view) -->
-    <div id="mobile-controls-layer">
+    <!-- Mobile Touch Controls (Joystick only, visible when Walk mode is active) -->
+    <div id="mobile-controls-layer" class="hidden">
       <!-- Left Movement Joystick Zone -->
       <div id="joystick-left-zone" class="joystick-zone">
         <div id="joystick-base" class="joystick-base">
@@ -218,26 +158,6 @@
 
       <!-- Right Touch Area (for looking around 360°) -->
       <div id="touch-look-zone"></div>
-
-      <!-- Right Action Buttons (PUBG Jump, Sprint, Talk & Pet) -->
-      <div class="mobile-action-buttons">
-        <button id="btn-mobile-talk" class="mobile-action-btn talk hidden" title="Talk / Interact">
-          <span>💬</span>
-          <small>TALK</small>
-        </button>
-        <button id="btn-mobile-pet" class="mobile-action-btn pet hidden" title="Pet / Feed Animal">
-          <span>🥕</span>
-          <small>PET</small>
-        </button>
-        <button id="btn-mobile-jump" class="mobile-action-btn jump" title="Jump">
-          <span>⬆️</span>
-          <small>JUMP</small>
-        </button>
-        <button id="btn-mobile-sprint" class="mobile-action-btn sprint" title="Sprint">
-          <span>⚡</span>
-          <small>RUN</small>
-        </button>
-      </div>
     </div>
 
     <!-- Interactive Proximity Prompt Toast (PC 'E' / Mobile Tap) -->
@@ -288,31 +208,6 @@
       <div class="mini-inspect-right">
         <button id="btn-inspect-macro" class="btn-mini-zoom">🔬 Zoom to Petals</button>
         <button id="btn-close-inspect" class="inspect-mini-close" title="Close">✕</button>
-      </div>
-    </div>
-
-    <!-- World Code Inspector Drawer (Integrated VS Code Terminal) -->
-    <div id="world-code-drawer" class="code-drawer collapsed">
-      <div class="drawer-header">
-        <div class="d-dots">
-          <span class="d-dot red" id="drawer-close"></span>
-          <span class="d-dot yellow" id="drawer-res"></span>
-          <span class="d-dot green" id="drawer-max"></span>
-        </div>
-        <div class="d-tabs">
-          <span class="d-tab active">metaverse_world_engine.js</span>
-          <span class="d-tab">procedural_biomes.glsl</span>
-          <span class="d-tab">world_physics.js</span>
-        </div>
-        <div class="d-actions">
-          <button id="btn-copy-script" class="btn-mini">📋 Copy Matrix</button>
-        </div>
-      </div>
-      <div class="drawer-body">
-        <div class="d-lines" id="drawer-lines"></div>
-        <div class="d-code">
-          <pre><code id="drawer-code-content"></code></pre>
-        </div>
       </div>
     </div>
 

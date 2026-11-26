@@ -939,11 +939,17 @@ kbd {
   border-color: #00f0ff;
 }
 
-/* Enable on mobile touch or screens under 1024px */
-@media (max-width: 1024px), (pointer: coarse) {
-  #mobile-controls-layer {
-    display: block;
-  }
+/* Mobile Controls Layer: Hidden by default, only activated when in Walk Mode */
+#mobile-controls-layer {
+  display: none;
+}
+
+#mobile-controls-layer.active {
+  display: block;
+}
+
+.mobile-action-buttons {
+  display: none !important; /* Fully removed as requested */
 }
 
 /* ========================================================

@@ -1865,9 +1865,11 @@ function createEarth3NPC(config, baseX, baseZ) {
   footRing.position.y = 0.05;
   npcGroup.add(footRing);
 
-  // 6. Overhead Holographic Nameplate (Visible from Distance)
+  // 6. Overhead Holographic Nameplate (Visible only when close to NPC)
   const nameplate = createNPCNameSprite(config.name, config.title, config.trimCol);
   nameplate.position.set(0, 6.8 * config.scale, 0);
+  nameplate.visible = false; // Initially hidden until player approaches
+  nameplate.material.opacity = 0;
   npcGroup.add(nameplate);
 
   // Initial Grounding
@@ -3152,7 +3154,22 @@ function animate() {
 
       // Gentle breathing bob
       npc.torso.position.y = Math.sin(time * 2.2 + npc.idlePhase) * 0.06;
+
+      // Reveal Nameplate smoothly when close (< 7.5m)
+      if (npc.nameplate) {
+        npc.nameplate.visible = true;
+        npc.nameplate.material.opacity = THREE.MathUtils.lerp(npc.nameplate.material.opacity, 1.0, 0.15);
+      }
     } else {
+      // Hide Nameplate when far away
+      if (npc.nameplate) {
+        if (npc.nameplate.material.opacity > 0.05) {
+          npc.nameplate.material.opacity = THREE.MathUtils.lerp(npc.nameplate.material.opacity, 0.0, 0.15);
+        } else {
+          npc.nameplate.visible = false;
+        }
+      }
+
       // Standard gentle wander patrol
       npc.angle += delta * npc.speed * 0.2;
       const targetX = npc.baseX + Math.cos(npc.angle) * npc.wanderRadius;
@@ -3549,6 +3566,8 @@ const btnOrbit = document.getElementById('btn-mode-orbit');
 const btnWalk = document.getElementById('btn-mode-walk');
 const btnFly = document.getElementById('btn-mode-fly');
 
+const mobileControlsLayer = document.getElementById('mobile-controls-layer');
+
 function switchMode(mode) {
   currentMode = mode;
   [btnOrbit, btnWalk, btnFly].forEach(b => b.classList.remove('active'));
@@ -3557,10 +3576,13 @@ function switchMode(mode) {
     btnOrbit.classList.add('active');
     orbitControls.enabled = true;
     crosshair.style.display = 'none';
+    if (mobileControlsLayer) mobileControlsLayer.classList.remove('active');
     showToast('Orbit / Drone Mode: Drag mouse to inspect, Scroll to zoom');
   } else if (mode === 'walk') {
     btnWalk.classList.add('active');
     orbitControls.enabled = false;
+    // Show Joystick control ONLY in Walk Mode!
+    if (mobileControlsLayer) mobileControlsLayer.classList.add('active');
     
     // Position character securely on terrain
     const startX = 0;
@@ -3576,11 +3598,12 @@ function switchMode(mode) {
     // Position camera immediately behind player
     camera.position.set(startX, startY + 3.5, startZ + 8.5);
     camera.lookAt(startX, startY + 1.8, startZ);
-    showToast('🚶 Walk Mode: Use WASD / Arrows or Mobile Joystick to Move!');
+    showToast('🚶 Walk Mode: Use Joystick (Left) or WASD to Move!');
   } else if (mode === 'fly') {
     btnFly.classList.add('active');
     orbitControls.enabled = false;
     crosshair.style.display = 'none';
+    if (mobileControlsLayer) mobileControlsLayer.classList.remove('active');
     showToast('🚀 Cinematic Auto-Flight Active');
   }
 }
@@ -3802,24 +3825,6 @@ if (typeof gsap !== 'undefined') {
       onUpdate: () => orbitControls.update()
     });
   };
-}
-
-// 3. SPLINE INTEGRATION
-const btnSpline = document.getElementById('btn-toggle-spline');
-const splinePanel = document.getElementById('spline-modal-panel');
-const btnCloseSpline = document.getElementById('btn-close-spline');
-if (btnSpline && splinePanel) {
-  btnSpline.addEventListener('click', () => {
-    splinePanel.classList.toggle('hidden');
-    if (!splinePanel.classList.contains('hidden')) {
-      showToast('🌌 Spline 3D Interactive Cosmic Core Opened');
-    }
-  });
-}
-if (btnCloseSpline && splinePanel) {
-  btnCloseSpline.addEventListener('click', () => {
-    splinePanel.classList.add('hidden');
-  });
 }
 
 // 4. MOTION (FRAMER MOTION WEB RUNTIME)
