@@ -82,7 +82,7 @@ function createGlowTexture() {
   const c = document.createElement('canvas');
   c.width = s; c.height = s;
   const ctx = c.getContext('2d');
-  const g = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+  const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
   g.addColorStop(0, 'rgba(255, 255, 255, 1)');
   g.addColorStop(0.2, 'rgba(255, 240, 250, 0.95)');
   g.addColorStop(0.55, 'rgba(0, 240, 255, 0.4)');
@@ -121,7 +121,7 @@ function create3DNameBadge(id, name, heightOffset = 22) {
   ctx.fillStyle = 'rgba(15, 8, 28, 0.88)';
   ctx.strokeStyle = '#00f0ff';
   ctx.lineWidth = 4;
-  
+
   // Draw round rect
   const x = 10, y = 10, w = 492, h = 108, r = 24;
   ctx.beginPath();
@@ -208,27 +208,26 @@ function createCelestialSky() {
 createCelestialSky();
 
 // ========================================================
-// 4. VAST ULTRA-DENSE BIOLUMINESCENT 5 EARTHS REALM (Central Earth + 4 Outer Earths)
+// 4. VAST ULTRA-DENSE BIOLUMINESCENT 5 EARTHS REALM (LAZY LOADED CHUNKS)
+// Each Earth is an independent chunk that activates and renders only when nearby!
 // ========================================================
-let terrainPointsMesh = null;
+const earthChunks = [];
+
 function createVastTerrain() {
-  const count = 280000;
-  const pos = new Float32Array(count * 3);
-  const col = new Float32Array(count * 3);
+  const pointsPerPlanet = 56000;
 
   // 5 Earth Centers & Colors
   const earthCenters = [
-    { x: 0, z: 0, rMax: 72, colHex: 0x05ffa1, altCol: 0x00f0ff },      // Earth-1 Central Core
-    { x: 0, z: 240, rMax: 62, colHex: 0x00f0ff, altCol: 0x0077ff },    // Earth-2 North Aqua Lotus
-    { x: 0, z: -240, rMax: 62, colHex: 0xff2a6d, altCol: 0x9d4edd },   // Earth-3 South Neon Sakura
-    { x: -250, z: 0, rMax: 62, colHex: 0xffbe0b, altCol: 0xff5500 },   // Earth-4 West Solaris Dunes
-    { x: 250, z: 0, rMax: 62, colHex: 0x9d4edd, altCol: 0xff2a6d }     // Earth-5 East Astral Peak
+    { id: '1', name: 'Earth-1: Central Core', x: 0, z: 0, rMax: 72, colHex: 0x05ffa1, altCol: 0x00f0ff },
+    { id: '2', name: 'Earth-2: North Aqua Lotus', x: 0, z: 240, rMax: 62, colHex: 0x00f0ff, altCol: 0x0077ff },
+    { id: '3', name: 'Earth-3: South Neon Sakura', x: 0, z: -240, rMax: 62, colHex: 0xff2a6d, altCol: 0x9d4edd },
+    { id: '4', name: 'Earth-4: West Solaris Dunes', x: -250, z: 0, rMax: 62, colHex: 0xffbe0b, altCol: 0xff5500 },
+    { id: '5', name: 'Earth-5: East Astral Peak', x: 250, z: 0, rMax: 62, colHex: 0x9d4edd, altCol: 0xff2a6d }
   ];
 
-  const pointsPerPlanet = Math.floor(count / 5);
-
-  let pIdx = 0;
-  earthCenters.forEach((ec, cIdx) => {
+  earthCenters.forEach((ec) => {
+    const pos = new Float32Array(pointsPerPlanet * 3);
+    const col = new Float32Array(pointsPerPlanet * 3);
     const cPrimary = new THREE.Color(ec.colHex);
     const cSecondary = new THREE.Color(ec.altCol);
 
@@ -239,23 +238,31 @@ function createVastTerrain() {
       const pz = ec.z + Math.sin(angle) * radius;
       const py = getTerrainHeightAt(px, pz);
 
-      pos[pIdx * 3 + 0] = px;
-      pos[pIdx * 3 + 1] = py;
-      pos[pIdx * 3 + 2] = pz;
+      pos[i * 3 + 0] = px;
+      pos[i * 3 + 1] = py;
+      pos[i * 3 + 2] = pz;
 
       const t = radius / ec.rMax;
       const pointColor = cPrimary.clone().lerp(cSecondary, t);
       if (Math.random() > 0.88) pointColor.addScalar(0.4);
 
-      col[pIdx * 3 + 0] = pointColor.r;
-      col[pIdx * 3 + 1] = pointColor.g;
-      col[pIdx * 3 + 2] = pointColor.b;
-      pIdx++;
+      col[i * 3 + 0] = pointColor.r;
+      col[i * 3 + 1] = pointColor.g;
+      col[i * 3 + 2] = pointColor.b;
     }
-  });
 
-  terrainPointsMesh = createPoints(pos, col, 0.35, 0.88);
-  worldGroup.add(terrainPointsMesh);
+    const chunkMesh = createPoints(pos, col, 0.35, 0.88);
+    chunkMesh.userData = { id: ec.id, x: ec.x, z: ec.z, rMax: ec.rMax };
+    worldGroup.add(chunkMesh);
+
+    earthChunks.push({
+      id: ec.id,
+      mesh: chunkMesh,
+      x: ec.x,
+      z: ec.z,
+      radius: ec.rMax
+    });
+  });
 }
 createVastTerrain();
 
@@ -265,6 +272,7 @@ createVastTerrain();
 // ========================================================
 const gateVortices = [];
 const allGates = []; // Holds references to all 8 Gates for Realm-specific Visibility
+const highwayChunks = []; // Lazy loaded highway and guardrail segments
 function createLuminousPathways() {
   const connections = [
     // North Road to Earth-2
@@ -308,7 +316,17 @@ function createLuminousPathways() {
       const c = baseCol.clone().addScalar(Math.random() * 0.3);
       col[i * 3 + 0] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     }
-    worldGroup.add(createPoints(pos, col, 0.42, 0.95));
+    const roadMesh = createPoints(pos, col, 0.42, 0.95);
+    worldGroup.add(roadMesh);
+
+    const midX = (conn.from[0] + conn.to[0]) * 0.5;
+    const midZ = (conn.from[1] + conn.to[1]) * 0.5;
+    highwayChunks.push({
+      targetId: conn.id,
+      mesh: roadMesh,
+      midX,
+      midZ
+    });
 
     // Road Edge Guardrails (Glowing Light Lines on both sides)
     const isHorizontal = Math.abs(conn.to[0] - conn.from[0]) > Math.abs(conn.to[1] - conn.from[1]);
@@ -326,7 +344,14 @@ function createLuminousPathways() {
         rPos[j * 3 + 2] = isHorizontal ? rz + offset : rz;
         rCol[j * 3 + 0] = baseCol.r; rCol[j * 3 + 1] = baseCol.g; rCol[j * 3 + 2] = baseCol.b;
       }
-      worldGroup.add(createPoints(rPos, rCol, 0.55, 1.0));
+      const railMesh = createPoints(rPos, rCol, 0.55, 1.0);
+      worldGroup.add(railMesh);
+      highwayChunks.push({
+        targetId: conn.id,
+        mesh: railMesh,
+        midX,
+        midZ
+      });
     });
 
     // 2. Cyberpunk Entry Gate (Archway Gate at Central Earth-1 road entrance)
@@ -1065,8 +1090,8 @@ function spawnTulipPlateau(x, z) {
   const pos = new Float32Array(count * 3);
   const col = new Float32Array(count * 3);
   const cBase = new THREE.Color(0.85, 0.05, 0.95);
-  const cMid  = new THREE.Color(0.0, 0.95, 1.0);
-  const cTip  = new THREE.Color(1.0, 1.0, 1.0);
+  const cMid = new THREE.Color(0.0, 0.95, 1.0);
+  const cTip = new THREE.Color(1.0, 1.0, 1.0);
 
   let pIdx = 0;
   for (let i = 0; i < count; i++) {
@@ -1216,8 +1241,8 @@ function createFaunaButterflies() {
     const bGroup = new THREE.Group();
     const wingGeo = new THREE.BufferGeometry();
     const wingPos = new Float32Array([
-      0, 0, 0,   1.0, 0.7, 0,   0.7, -0.5, 0,
-      0, 0, 0,  -1.0, 0.7, 0,  -0.7, -0.5, 0
+      0, 0, 0, 1.0, 0.7, 0, 0.7, -0.5, 0,
+      0, 0, 0, -1.0, 0.7, 0, -0.7, -0.5, 0
     ]);
     wingGeo.setAttribute('position', new THREE.BufferAttribute(wingPos, 3));
 
@@ -1232,7 +1257,7 @@ function createFaunaButterflies() {
     bGroup.add(mesh);
 
     // Glowing core particle
-    const corePoint = createPoints(new Float32Array([0,0,0]), new Float32Array([1,1,1]), 0.5, 0.9);
+    const corePoint = createPoints(new Float32Array([0, 0, 0]), new Float32Array([1, 1, 1]), 0.5, 0.9);
     bGroup.add(corePoint);
 
     // Distributed around the main garden
@@ -1433,82 +1458,226 @@ const pollenMesh = new THREE.Points(pollenGeo, new THREE.PointsMaterial({
 worldGroup.add(pollenMesh);
 
 // ========================================================
-// 5.5 ANIMATED 3D CYBER HUMANOID AVATAR (Full Mecha Body with Head, Torso, Arms & Legs)
+// 5.5 REALISTIC HIGH-FIDELITY CYBERNETIC HERO AVATAR (PBR Humanoid)
+// Detailed with sculpted anatomical plating, glowing energy veins, Pauldrons,
+// articulated elbows, knees, boots, jetpack thrusters and animated helmet HUD.
 // ========================================================
 const playerGroup = new THREE.Group();
 
-// Dark Cyber Armor Material
-const armorMat = new THREE.MeshStandardMaterial({
-  color: 0x0c1220,
-  metalness: 0.88,
-  roughness: 0.18,
-  emissive: 0x050f1f,
-  emissiveIntensity: 0.5
+// Premium High-Tech Materials
+const suitCarbonMat = new THREE.MeshStandardMaterial({
+  color: 0x161b26, // Deep nanotech carbon fiber
+  metalness: 0.85,
+  roughness: 0.22,
+  emissive: 0x050a14,
+  emissiveIntensity: 0.2
 });
-const neonCyanMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-const neonPinkMat = new THREE.MeshBasicMaterial({ color: 0xff2a6d });
+const suitPlatingMat = new THREE.MeshStandardMaterial({
+  color: 0x283244, // Reinforced titanium armor plating
+  metalness: 0.92,
+  roughness: 0.14,
+  emissive: 0x091424,
+  emissiveIntensity: 0.3
+});
+const suitGoldTrimMat = new THREE.MeshStandardMaterial({
+  color: 0xffd166, // Luxury cyber gold accents
+  metalness: 0.95,
+  roughness: 0.1
+});
+const neonVeinCyanMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+const neonVisorMat = new THREE.MeshBasicMaterial({ color: 0xff0055 }); // Radiant Cyber Visor
+const thrusterFireMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
 
-// 1. Torso / Chest
+// 1. Torso & Upper Body Group
 const torsoGroup = new THREE.Group();
-const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.6, 1.6), armorMat);
-chestMesh.position.y = 3.6;
+
+// A. Abdomen & Spine
+const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.9, 1.4, 16), suitCarbonMat);
+spine.position.y = 2.7;
+torsoGroup.add(spine);
+
+// B. Sculpted Chest / Pectoral Plating
+const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.6, 1.6), suitPlatingMat);
+chestMesh.position.y = 4.0;
 torsoGroup.add(chestMesh);
 
-// Torso neon power core
-const coreMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.4, 16), neonCyanMat);
+// Ribcage angled side guards
+const ribL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.2, 1.3), suitCarbonMat);
+ribL.position.set(-1.1, 3.8, 0.1);
+ribL.rotation.z = -0.15;
+const ribR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.2, 1.3), suitCarbonMat);
+ribR.position.set(1.1, 3.8, 0.1);
+ribR.rotation.z = 0.15;
+torsoGroup.add(ribL);
+torsoGroup.add(ribR);
+
+// C. Torso Quantum Arc Reactor (Central Power Core on Front Chest: facing forward z = -0.82)
+const coreOuterRing = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.08, 12, 32), suitGoldTrimMat);
+coreOuterRing.position.set(0, 4.05, -0.82);
+torsoGroup.add(coreOuterRing);
+
+const coreMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.2, 24), neonVeinCyanMat);
 coreMesh.rotation.x = Math.PI / 2;
-coreMesh.position.set(0, 3.8, 0.85);
+coreMesh.position.set(0, 4.05, -0.81);
 torsoGroup.add(coreMesh);
 
-// 2. Cyber Head & Holographic Visor
+// D. Cyber Jetpack / Kinetic Battery on Back (facing camera z = +0.9)
+const jetpack = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.0, 0.65), suitPlatingMat);
+jetpack.position.set(0, 3.9, 0.9);
+torsoGroup.add(jetpack);
+
+// Dual Thrusters on Back
+const thrusterL = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 0.8, 16), suitCarbonMat);
+thrusterL.position.set(-0.55, 2.7, 0.9);
+const thrusterR = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 0.8, 16), suitCarbonMat);
+thrusterR.position.set(0.55, 2.7, 0.9);
+torsoGroup.add(thrusterL);
+torsoGroup.add(thrusterR);
+
+const flameL = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.6, 12), thrusterFireMat);
+flameL.position.set(-0.55, 2.1, 0.9);
+flameL.rotation.x = Math.PI;
+const flameR = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.6, 12), thrusterFireMat);
+flameR.position.set(0.55, 2.1, 0.9);
+flameR.rotation.x = Math.PI;
+torsoGroup.add(flameL);
+torsoGroup.add(flameR);
+
+// 2. High-Tech Helmet & Articulated Neck
 const headGroup = new THREE.Group();
-headGroup.position.set(0, 5.2, 0);
-const headMesh = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.4, 1.4), armorMat);
+headGroup.position.set(0, 5.25, 0);
+
+const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.6, 16), suitCarbonMat);
+neck.position.y = -0.35;
+headGroup.add(neck);
+
+// Helmet Shell (Sleek Angular Sculpt)
+const headMesh = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.25, 1.3), suitPlatingMat);
 headGroup.add(headMesh);
-const visorMesh = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.45, 0.6), neonPinkMat);
-visorMesh.position.set(0, 0.1, -0.6);
+
+const helmetCrown = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 1.2), suitGoldTrimMat);
+helmetCrown.position.set(0, 0.65, -0.05);
+headGroup.add(helmetCrown);
+
+// Jaw & Chin Guard
+const jawGuard = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.6, 4), suitPlatingMat);
+jawGuard.position.set(0, -0.4, -0.45);
+jawGuard.rotation.x = 0.5;
+headGroup.add(jawGuard);
+
+// Holographic Cyber Visor (Curved Forward Look)
+const visorMesh = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.38, 0.5), neonVisorMat);
+visorMesh.position.set(0, 0.08, -0.55);
 headGroup.add(visorMesh);
+
+// Ear Audio Receptors
+const earL = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.15, 16), suitGoldTrimMat);
+earL.rotation.z = Math.PI / 2;
+earL.position.set(-0.65, 0.05, 0);
+const earR = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.15, 16), suitGoldTrimMat);
+earR.rotation.z = Math.PI / 2;
+earR.position.set(0.65, 0.05, 0);
+headGroup.add(earL);
+headGroup.add(earR);
+
 torsoGroup.add(headGroup);
 
-// 3. Articulated Arms (Left & Right Shoulders)
+// 3. Articulated Arms (Shoulders, Biceps, Elbows, Forearms & Hands)
+// Left Arm
 const leftArmGroup = new THREE.Group();
-leftArmGroup.position.set(-1.6, 4.6, 0);
-const leftArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 2.4, 0.8), armorMat);
-leftArmMesh.position.y = -1.0;
-leftArmGroup.add(leftArmMesh);
+leftArmGroup.position.set(-1.55, 4.6, 0);
+
+// Shoulder Pauldron Guard
+const lPauldron = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.95), suitPlatingMat);
+lPauldron.position.set(-0.1, 0.15, 0);
+lPauldron.rotation.z = 0.2;
+leftArmGroup.add(lPauldron);
+
+const lBicep = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.26, 1.1, 16), suitCarbonMat);
+lBicep.position.set(-0.05, -0.65, 0);
+leftArmGroup.add(lBicep);
+
+const lForearm = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.2, 0.6), suitPlatingMat);
+lForearm.position.set(-0.05, -1.6, 0);
+leftArmGroup.add(lForearm);
+
+const lHand = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.45, 0.42), suitCarbonMat);
+lHand.position.set(-0.05, -2.3, 0);
+leftArmGroup.add(lHand);
+
 torsoGroup.add(leftArmGroup);
 
+// Right Arm
 const rightArmGroup = new THREE.Group();
-rightArmGroup.position.set(1.6, 4.6, 0);
-const rightArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 2.4, 0.8), armorMat);
-rightArmMesh.position.y = -1.0;
-rightArmGroup.add(rightArmMesh);
+rightArmGroup.position.set(1.55, 4.6, 0);
+
+const rPauldron = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.95), suitPlatingMat);
+rPauldron.position.set(0.1, 0.15, 0);
+rPauldron.rotation.z = -0.2;
+rightArmGroup.add(rPauldron);
+
+const rBicep = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.26, 1.1, 16), suitCarbonMat);
+rBicep.position.set(0.05, -0.65, 0);
+rightArmGroup.add(rBicep);
+
+const rForearm = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.2, 0.6), suitPlatingMat);
+rForearm.position.set(0.05, -1.6, 0);
+rightArmGroup.add(rForearm);
+
+const rHand = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.45, 0.42), suitCarbonMat);
+rHand.position.set(0.05, -2.3, 0);
+rightArmGroup.add(rHand);
+
 torsoGroup.add(rightArmGroup);
 
 playerGroup.add(torsoGroup);
 
-// 4. Articulated Legs (Left & Right Hips for Walking/Running)
+// 4. Articulated Legs (Hips, Thighs, Knee Pads, Calves & Magnetic Boots)
+// Left Leg
 const leftLegGroup = new THREE.Group();
-leftLegGroup.position.set(-0.7, 2.4, 0);
-const leftLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.4, 0.95), armorMat);
-leftLegMesh.position.y = -1.2;
-leftLegGroup.add(leftLegMesh);
+leftLegGroup.position.set(-0.65, 2.2, 0);
+
+const lThigh = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.3, 0.75), suitCarbonMat);
+lThigh.position.y = -0.65;
+leftLegGroup.add(lThigh);
+
+// Knee Armor Guard (Front facing knees z = -0.42)
+const lKnee = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.4, 0.3), suitGoldTrimMat);
+lKnee.position.set(0, -1.3, -0.42);
+leftLegGroup.add(lKnee);
+
+const lShin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 1.3, 0.72), suitPlatingMat);
+lShin.position.y = -1.95;
+leftLegGroup.add(lShin);
+
+// Heavy Magnetic Boot (toes pointing forward z = -0.25)
+const lBoot = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.55, 1.25), suitPlatingMat);
+lBoot.position.set(0, -2.6, -0.2);
+leftLegGroup.add(lBoot);
+
 playerGroup.add(leftLegGroup);
 
+// Right Leg
 const rightLegGroup = new THREE.Group();
-rightLegGroup.position.set(0.7, 2.4, 0);
-const rightLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.4, 0.95), armorMat);
-rightLegMesh.position.y = -1.2;
-rightLegGroup.add(rightLegMesh);
-playerGroup.add(rightLegGroup);
+rightLegGroup.position.set(0.65, 2.2, 0);
 
-// 5. Glowing Shadow / Beacon Ring beneath feet
-const ringGeo = new THREE.RingGeometry(1.6, 2.4, 32);
-const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.65 });
-const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-ringMesh.rotation.x = Math.PI / 2;
-ringMesh.position.y = 0.05;
-playerGroup.add(ringMesh);
+const rThigh = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.3, 0.75), suitCarbonMat);
+rThigh.position.y = -0.65;
+rightLegGroup.add(rThigh);
+
+const rKnee = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.4, 0.3), suitGoldTrimMat);
+rKnee.position.set(0, -1.3, -0.42);
+rightLegGroup.add(rKnee);
+
+const rShin = new THREE.Mesh(new THREE.BoxGeometry(0.68, 1.3, 0.72), suitPlatingMat);
+rShin.position.y = -1.95;
+rightLegGroup.add(rShin);
+
+const rBoot = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.55, 1.25), suitPlatingMat);
+rBoot.position.set(0, -2.6, -0.2);
+rightLegGroup.add(rBoot);
+
+playerGroup.add(rightLegGroup);
 
 // Initial placement
 playerGroup.position.set(0, 0, 18);
@@ -1517,6 +1686,35 @@ worldGroup.add(playerGroup);
 // Player state
 let playerRotationY = 0;
 let playerPitch = 0; // Camera vertical look angle
+
+// PUBG-Style Free Look 360° ("Eye Look" / V-Key)
+let isFreeLooking = false;
+let freeLookRotationY = 0; // Relative free-look yaw angle
+let freeLookPitch = 0;     // Relative free-look pitch angle
+let freeLookLookAtFace = false; // When true, camera spins 180 to face character directly!
+const freelookBadge = document.getElementById('freelook-indicator');
+const btnPubgEye = document.getElementById('btn-pubg-eye');
+
+function setFreeLookState(active, faceFront = false) {
+  isFreeLooking = active;
+  if (active) {
+    if (faceFront) {
+      // Rotate 180° so the camera is in front of the character, showing their face and visor clearly!
+      freeLookRotationY = Math.PI;
+      freeLookPitch = -0.05;
+      freeLookLookAtFace = true;
+    }
+    freelookBadge?.classList.remove('hidden');
+    btnPubgEye?.classList.add('active');
+    showToast(faceFront ? '👁️ PUBG Eye Mode: Character Face & 360° View Active!' : '👁️ Free Look 360° Active (V)');
+  } else {
+    freelookBadge?.classList.add('hidden');
+    btnPubgEye?.classList.remove('active');
+    freeLookRotationY = 0;
+    freeLookPitch = 0;
+    freeLookLookAtFace = false;
+  }
+}
 
 // ========================================================
 // 5.6 EARTH-3 SAKURA FAUNA & DIVERSE COSTUMED NPCS (MASTERCLASS EDITION)
@@ -2294,6 +2492,66 @@ const dashTrailMesh = new THREE.Points(dashTrailGeo, new THREE.PointsMaterial({
 worldGroup.add(dashTrailMesh);
 let dashTrailIdx = 0;
 
+// ========================================================
+// 5.8 DYNAMIC NEON GROUND STEP PARTICLES & FOOTPRINT RIPPLES (Feature 3)
+// ========================================================
+const footprintPoolSize = 24;
+const footprintRings = [];
+const footprintRingGeo = new THREE.RingGeometry(0.3, 0.7, 24);
+
+for (let i = 0; i < footprintPoolSize; i++) {
+  const fMat = new THREE.MeshBasicMaterial({
+    color: 0x00f0ff,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const fMesh = new THREE.Mesh(footprintRingGeo, fMat);
+  fMesh.rotation.x = Math.PI / 2;
+  fMesh.position.set(0, -100, 0);
+  fMesh.visible = false;
+  worldGroup.add(fMesh);
+
+  footprintRings.push({
+    mesh: fMesh,
+    material: fMat,
+    life: 0,
+    maxLife: 1.4,
+    scale: 1.0
+  });
+}
+
+let footprintPoolIndex = 0;
+let lastStepDist = 0;
+let lastPlayerStepPos = new THREE.Vector3(0, 0, 0);
+
+function spawnFootprint(x, y, z, footOffset = 0.5) {
+  const fp = footprintRings[footprintPoolIndex];
+  footprintPoolIndex = (footprintPoolIndex + 1) % footprintPoolSize;
+
+  // Alternate left/right foot offset perpendicular to facing angle
+  const perpAngle = playerRotationY + Math.PI / 2;
+  const fx = x + Math.sin(perpAngle) * footOffset;
+  const fz = z + Math.cos(perpAngle) * footOffset;
+  const fy = getTerrainHeightAt(fx, fz) + 0.04;
+
+  fp.mesh.position.set(fx, fy, fz);
+  fp.mesh.visible = true;
+  fp.life = fp.maxLife;
+  fp.scale = 0.8;
+  fp.mesh.scale.set(fp.scale, fp.scale, 1);
+  fp.material.opacity = 0.85;
+
+  // Realm specific neon step color
+  if (activeEarth === '2') fp.material.color.setHex(0x00f0ff); // Aqua
+  else if (activeEarth === '3') fp.material.color.setHex(0xff2a6d); // Sakura Pink
+  else if (activeEarth === '4') fp.material.color.setHex(0xffbe0b); // Gold
+  else if (activeEarth === '5') fp.material.color.setHex(0x9d4edd); // Purple
+  else fp.material.color.setHex(0x05ffa1); // Emerald Cyan for Earth-1
+}
+
 let joystickMove = { x: 0, y: 0 }; // Touch joystick inputs (-1 to +1)
 const velocity = { x: 0, y: 0, z: 0 };
 
@@ -2307,13 +2565,13 @@ let gateCooldown = 0; // Cooldown timer (seconds) to prevent re-triggering loop 
 // ========================================================
 // 6. WALKING ENGINE (KEYBOARD + MOUSE & PUBG TOUCH THUMBSTICKS)
 // ========================================================
-const keys = { 
-  forward: false, 
-  backward: false, 
-  left: false, 
-  right: false, 
-  jump: false, 
-  sprint: false 
+const keys = {
+  forward: false,
+  backward: false,
+  left: false,
+  right: false,
+  jump: false,
+  sprint: false
 };
 
 // Calculate exact ground elevation at player (x, z)
@@ -2370,12 +2628,22 @@ function getTerrainHeightAt(x, z) {
 
 window.addEventListener('keydown', (e) => {
   const code = e.code;
+  if (code === 'Space') {
+    e.preventDefault(); // Prevent browser page scroll or accidental button focus clicks!
+    keys.jump = true;
+  }
   if (code === 'KeyW' || code === 'ArrowUp') keys.forward = true;
   if (code === 'KeyS' || code === 'ArrowDown') keys.backward = true;
   if (code === 'KeyA' || code === 'ArrowLeft') keys.left = true;
   if (code === 'KeyD' || code === 'ArrowRight') keys.right = true;
-  if (code === 'Space') keys.jump = true;
   if (code === 'ShiftLeft' || code === 'ShiftRight') keys.sprint = true;
+
+  // V-Key Free Look Hold (PUBG Eye View: Hold V to look at character's face & 360° orbit)
+  if (code === 'KeyV' && currentMode === 'walk') {
+    if (!isFreeLooking) {
+      setFreeLookState(true, true); // Rotate camera to face front
+    }
+  }
 });
 
 window.addEventListener('keyup', (e) => {
@@ -2384,8 +2652,18 @@ window.addEventListener('keyup', (e) => {
   if (code === 'KeyS' || code === 'ArrowDown') keys.backward = false;
   if (code === 'KeyA' || code === 'ArrowLeft') keys.left = false;
   if (code === 'KeyD' || code === 'ArrowRight') keys.right = false;
-  if (code === 'Space') keys.jump = false;
+  if (code === 'Space') {
+    e.preventDefault();
+    keys.jump = false;
+  }
   if (code === 'ShiftLeft' || code === 'ShiftRight') keys.sprint = false;
+
+  // Release V-Key -> Immediately snaps camera back to standard view
+  if (code === 'KeyV' && currentMode === 'walk') {
+    if (isFreeLooking) {
+      setFreeLookState(false);
+    }
+  }
 });
 
 // ========================================================
@@ -2396,6 +2674,70 @@ const joystickThumb = document.getElementById('joystick-thumb');
 const touchLookZone = document.getElementById('touch-look-zone');
 const btnMobileJump = document.getElementById('btn-mobile-jump');
 const btnMobileSprint = document.getElementById('btn-mobile-sprint');
+
+// ========================================================
+// 6.6 PUBG MOBILE FLOATING EYE BUTTON CONTROLLER
+// (Hold / Drag or Click to see Character's Face & 360° view)
+// ========================================================
+if (btnPubgEye) {
+  let isEyeDragging = false;
+  let eyeDragStart = { x: 0, y: 0 };
+
+  // Mobile Touch Hold / Drag
+  btnPubgEye.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const touch = e.touches[0];
+    isEyeDragging = true;
+    eyeDragStart = { x: touch.clientX, y: touch.clientY };
+    setFreeLookState(true, true);
+  }, { passive: false });
+
+  window.addEventListener('touchmove', (e) => {
+    if (isEyeDragging) {
+      const touch = e.touches[0];
+      const dx = touch.clientX - eyeDragStart.x;
+      const dy = touch.clientY - eyeDragStart.y;
+      eyeDragStart = { x: touch.clientX, y: touch.clientY };
+      freeLookRotationY -= dx * 0.006;
+      freeLookPitch = Math.max(-0.85, Math.min(0.85, freeLookPitch - dy * 0.005));
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchend', (e) => {
+    if (isEyeDragging) {
+      isEyeDragging = false;
+      setFreeLookState(false);
+    }
+  });
+
+  // Desktop Mouse Click / Hold on Eye Button
+  btnPubgEye.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isEyeDragging = true;
+    eyeDragStart = { x: e.clientX, y: e.clientY };
+    setFreeLookState(true, true);
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (isEyeDragging) {
+      const dx = e.clientX - eyeDragStart.x;
+      const dy = e.clientY - eyeDragStart.y;
+      eyeDragStart = { x: e.clientX, y: e.clientY };
+      freeLookRotationY -= dx * 0.006;
+      freeLookPitch = Math.max(-0.85, Math.min(0.85, freeLookPitch - dy * 0.005));
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isEyeDragging) {
+      isEyeDragging = false;
+      setFreeLookState(false);
+    }
+  });
+}
+
 
 let touchMoveId = null;
 let touchLookId = null;
@@ -2471,9 +2813,15 @@ function handleTouchLook(clientX, clientY) {
   const deltaY = clientY - touchLookStart.y;
   touchLookStart = { x: clientX, y: clientY };
 
-  // Adjust player yaw and pitch (Camera rotation)
-  playerRotationY -= deltaX * 0.005;
-  playerPitch = Math.max(-0.6, Math.min(0.6, playerPitch - deltaY * 0.004));
+  if (isFreeLooking) {
+    // Rotate camera around character without changing running direction
+    freeLookRotationY -= deltaX * 0.005;
+    freeLookPitch = Math.max(-0.85, Math.min(0.85, freeLookPitch - deltaY * 0.004));
+  } else {
+    // Adjust player yaw and pitch (Camera rotation)
+    playerRotationY -= deltaX * 0.005;
+    playerPitch = Math.max(-0.6, Math.min(0.6, playerPitch - deltaY * 0.004));
+  }
 }
 
 // Mobile Jump & Sprint buttons
@@ -2498,8 +2846,8 @@ let mouseLookActive = false;
 window.addEventListener('mousedown', (e) => {
   if (currentMode === 'walk') {
     // Only engage mouse look if not clicking on UI buttons
-    if (e.target.closest('.hud-top') || e.target.closest('.hud-controls-card') || 
-        e.target.closest('.floating-toolbox') || e.target.closest('.code-drawer')) {
+    if (e.target.closest('.hud-top') || e.target.closest('.hud-controls-card') ||
+      e.target.closest('.floating-toolbox') || e.target.closest('.code-drawer')) {
       return;
     }
     mouseLookActive = true;
@@ -2531,10 +2879,16 @@ window.addEventListener('mousemove', (e) => {
     }
 
     if (deltaX !== 0 || deltaY !== 0) {
-      // Turn left & right with mouse X movement
-      playerRotationY -= deltaX * 0.0035;
-      // Look up & down with mouse Y movement (clamped)
-      playerPitch = Math.max(-0.6, Math.min(0.6, playerPitch - deltaY * 0.003));
+      if (isFreeLooking) {
+        // Free Look 360°: Rotate camera around character without changing body facing
+        freeLookRotationY -= deltaX * 0.0035;
+        freeLookPitch = Math.max(-0.85, Math.min(0.85, freeLookPitch - deltaY * 0.003));
+      } else {
+        // Turn left & right with mouse X movement
+        playerRotationY -= deltaX * 0.0035;
+        // Look up & down with mouse Y movement (clamped)
+        playerPitch = Math.max(-0.6, Math.min(0.6, playerPitch - deltaY * 0.003));
+      }
     }
   }
 });
@@ -2754,9 +3108,9 @@ window.addEventListener('mousemove', (e) => {
 // Click on flower to inspect & warp
 window.addEventListener('click', (e) => {
   // Prevent click when clicking UI panels
-  if (e.target.closest('.hud-top') || e.target.closest('.hud-controls-card') || 
-      e.target.closest('.floating-toolbox') || e.target.closest('.inspect-overlay') || 
-      e.target.closest('.code-drawer')) {
+  if (e.target.closest('.hud-top') || e.target.closest('.hud-controls-card') ||
+    e.target.closest('.floating-toolbox') || e.target.closest('.inspect-overlay') ||
+    e.target.closest('.code-drawer')) {
     return;
   }
 
@@ -2962,7 +3316,6 @@ function animate() {
     if (keys.forward) moveForward += 1;
     if (keys.backward) moveForward -= 1;
     if (keys.right) moveRight += 1;
-    if (keys.left) moveLeft: moveRight -= 1;
     if (keys.left) moveRight -= 1;
 
     // Mobile Thumbstick
@@ -2987,21 +3340,6 @@ function animate() {
     playerGroup.position.x += worldMoveX;
     playerGroup.position.z += worldMoveZ;
 
-    // Feature 6: Neon Dash Trail when Sprinting
-    if (keys.sprint && inputLen > 0.2) {
-      const dPos = dashTrailGeo.attributes.position.array;
-      const dCol = dashTrailGeo.attributes.color.array;
-      const pIdx = dashTrailIdx * 3;
-      dPos[pIdx + 0] = playerGroup.position.x + (Math.random() - 0.5) * 1.2;
-      dPos[pIdx + 1] = playerGroup.position.y + 0.3 + Math.random() * 0.8;
-      dPos[pIdx + 2] = playerGroup.position.z + (Math.random() - 0.5) * 1.2;
-      dCol[pIdx + 0] = 0.0;
-      dCol[pIdx + 1] = 0.94;
-      dCol[pIdx + 2] = 1.0;
-      dashTrailIdx = (dashTrailIdx + 1) % dashTrailCount;
-      dashTrailGeo.attributes.position.needsUpdate = true;
-    }
-
     // Smooth player box facing angle towards movement
     if (inputLen > 0.1) {
       const targetAngle = playerRotationY + Math.atan2(moveRight, moveForward);
@@ -3018,16 +3356,21 @@ function animate() {
       velocity.y = 0;
       playerGroup.position.y = groundLevel;
       if (keys.jump) {
-        velocity.y = 16.0; // Jump impulse
+        velocity.y = 16.0; // Clean upward Jump impulse
       }
     }
     playerGroup.position.y += velocity.y * delta;
 
     // 2. 3rd-Person Follow Camera (Scaled for larger character box)
-    const cameraDistance = 14.0;
-    const cameraHeight = 6.0 + playerPitch * 5.0;
-    const camTargetX = playerGroup.position.x + Math.sin(playerRotationY) * cameraDistance;
-    const camTargetZ = playerGroup.position.z + Math.cos(playerRotationY) * cameraDistance;
+    // When free-looking at face, pull slightly closer (11.5m) so the face & helmet are clear!
+    const cameraDistance = isFreeLooking ? 11.5 : 14.0;
+    // Calculate total effective camera yaw and pitch
+    const effCamAngleY = isFreeLooking ? (playerRotationY + freeLookRotationY) : playerRotationY;
+    const effPitch = isFreeLooking ? (playerPitch + freeLookPitch) : playerPitch;
+
+    const cameraHeight = (isFreeLooking ? 4.8 : 6.0) + effPitch * 5.0;
+    const camTargetX = playerGroup.position.x + Math.sin(effCamAngleY) * cameraDistance;
+    const camTargetZ = playerGroup.position.z + Math.cos(effCamAngleY) * cameraDistance;
     const camTargetY = playerGroup.position.y + cameraHeight;
 
     // Articulated Humanoid Walk / Run Animation
@@ -3080,6 +3423,30 @@ function animate() {
 
     // Look at player center
     camera.lookAt(playerGroup.position.x, playerGroup.position.y + 3.2, playerGroup.position.z);
+
+    // Realistic Character Head Tracking in Free Look (Helmet & Visor track camera view)
+    if (headGroup) {
+      if (isFreeLooking) {
+        // Normalize rotation angle relative to body
+        let relativeAngle = (freeLookRotationY % (Math.PI * 2));
+        if (relativeAngle > Math.PI) relativeAngle -= Math.PI * 2;
+        if (relativeAngle < -Math.PI) relativeAngle += Math.PI * 2;
+
+        // If viewing from behind/side, head turns up to ~75 degrees towards view
+        // If viewing directly from front (showing face), head stays forward facing camera proudly!
+        let targetHeadYaw = 0;
+        if (Math.abs(relativeAngle) < Math.PI * 0.75) {
+          targetHeadYaw = Math.max(-1.3, Math.min(1.3, -relativeAngle));
+        }
+        const targetHeadPitch = Math.max(-0.5, Math.min(0.5, -freeLookPitch));
+        headGroup.rotation.y = THREE.MathUtils.lerp(headGroup.rotation.y, targetHeadYaw, 0.2);
+        headGroup.rotation.x = THREE.MathUtils.lerp(headGroup.rotation.x, targetHeadPitch, 0.2);
+      } else {
+        // Return head smoothly forward
+        headGroup.rotation.y = THREE.MathUtils.lerp(headGroup.rotation.y, 0, 0.15);
+        headGroup.rotation.x = THREE.MathUtils.lerp(headGroup.rotation.x, 0, 0.15);
+      }
+    }
   } else if (currentMode === 'fly') {
     flyAngle += 0.004;
     const r = 90 + Math.sin(flyAngle * 2) * 20;
@@ -3092,13 +3459,58 @@ function animate() {
   }
 
   // Rotate Landmark spirals
+  // [LAZY LOADING OPTIMIZATION]: Frustum/Distance Culling for 120+ procedural landmarks
   const tSin = Math.sin(time * 0.3) * 0.12;
   const tSpiral = -time * 1.2;
   const tRing = time * 0.6;
   const tRingX = Math.sin(time) * 0.2;
 
+  const camX = camera.position.x;
+  const camY = camera.position.y;
+  const camZ = camera.position.z;
+  const isHighAltitude = camY > 80;
+
+  // 1. LAZY LOADING CHUNKS: 5 Earths terrain chunks
+  for (let i = 0; i < earthChunks.length; i++) {
+    const chunk = earthChunks[i];
+    if (isHighAltitude) {
+      // In orbital / top-down bird's-eye view, keep all planetary centers visible
+      if (!chunk.mesh.visible) chunk.mesh.visible = true;
+    } else {
+      const distToChunk = Math.hypot(chunk.x - camX, chunk.z - camZ);
+      const isVisible = distToChunk < (chunk.radius + 180);
+      if (chunk.mesh.visible !== isVisible) {
+        chunk.mesh.visible = isVisible;
+      }
+    }
+  }
+
+  // 2. LAZY LOADING HIGHWAYS: Roads and guardrails
+  for (let i = 0; i < highwayChunks.length; i++) {
+    const hc = highwayChunks[i];
+    if (isHighAltitude) {
+      if (!hc.mesh.visible) hc.mesh.visible = true;
+    } else {
+      const distToHighway = Math.hypot(hc.midX - camX, hc.midZ - camZ);
+      const isVisible = distToHighway < 210;
+      if (hc.mesh.visible !== isVisible) {
+        hc.mesh.visible = isVisible;
+      }
+    }
+  }
+
   for (let i = 0; i < landmarks.length; i++) {
     const lm = landmarks[i];
+
+    // Distance check: If landmark is within 220 units of camera, animate and render it
+    const distToCam = Math.hypot(lm.position.x - camX, lm.position.z - camZ);
+    if (!isHighAltitude && distToCam > 260) {
+      if (lm.visible) lm.visible = false; // Lazy Cull off-screen distant flora
+      continue;
+    } else {
+      if (!lm.visible) lm.visible = true; // Lazy Resume
+    }
+
     lm.rotation.y = tSin;
 
     const sp = lm.getObjectByName('spiral');
@@ -3133,148 +3545,184 @@ function animate() {
     b.rotation.y = -bAngle + Math.PI / 2;
   }
 
-  // 🌸 Earth-3 Costumed NPCs Animations (Gentle Wandering, Arm Swing, Cape flutter & Breathing)
-  for (let i = 0; i < earth3NPCs.length; i++) {
-    const npc = earth3NPCs[i];
+  // 👣 Animate Dynamic Footprint Rings (Expansion & Smooth Fade-Out)
+  for (let i = 0; i < footprintRings.length; i++) {
+    const fp = footprintRings[i];
+    if (fp.life > 0) {
+      fp.life -= delta;
+      const progress = 1.0 - (fp.life / fp.maxLife); // 0 -> 1
+      fp.scale = 0.8 + progress * 0.9; // Smoothly expands from 0.8 to 1.7
+      fp.mesh.scale.set(fp.scale, fp.scale, 1);
+      fp.material.opacity = Math.max(0, (1.0 - progress) * 0.85);
 
-    // Check distance to player for interactive Head / Body Tracking
-    const distToPlayer = playerGroup.position.distanceTo(npc.group.position);
-
-    if (distToPlayer < 7.5) {
-      // NPC stops walking and turns to face the approaching player warmly
-      const lookDx = playerGroup.position.x - npc.group.position.x;
-      const lookDz = playerGroup.position.z - npc.group.position.z;
-      const lookAngle = Math.atan2(lookDx, lookDz);
-      npc.group.rotation.y = THREE.MathUtils.lerp(npc.group.rotation.y, lookAngle + Math.PI, 0.08);
-
-      // Relax limbs into respectful greeting/listening pose
-      npc.lLeg.rotation.x = THREE.MathUtils.lerp(npc.lLeg.rotation.x, 0, 0.1);
-      npc.rLeg.rotation.x = THREE.MathUtils.lerp(npc.rLeg.rotation.x, 0, 0.1);
-      npc.lArm.rotation.x = THREE.MathUtils.lerp(npc.lArm.rotation.x, 0, 0.1);
-      npc.rArm.rotation.x = THREE.MathUtils.lerp(npc.rArm.rotation.x, 0, 0.1);
-
-      // Gentle breathing bob
-      npc.torso.position.y = Math.sin(time * 2.2 + npc.idlePhase) * 0.06;
-
-      // Reveal Nameplate smoothly when close (< 7.5m)
-      if (npc.nameplate) {
-        npc.nameplate.visible = true;
-        npc.nameplate.material.opacity = THREE.MathUtils.lerp(npc.nameplate.material.opacity, 1.0, 0.15);
+      if (fp.life <= 0) {
+        fp.mesh.visible = false;
       }
-    } else {
-      // Hide Nameplate when far away
-      if (npc.nameplate) {
-        if (npc.nameplate.material.opacity > 0.05) {
-          npc.nameplate.material.opacity = THREE.MathUtils.lerp(npc.nameplate.material.opacity, 0.0, 0.15);
-        } else {
-          npc.nameplate.visible = false;
+    }
+  }
+
+  // 🌸 Earth-3 Costumed NPCs Animations (Gentle Wandering, Arm Swing, Cape flutter & Breathing)
+  // [LAZY LOADING OPTIMIZATION]: Only animate and update NPCs when camera/player is near Earth-3!
+  const isNearEarth3 = Math.hypot(playerGroup.position.x - 0, playerGroup.position.z - (-240)) < 115 ||
+                       Math.hypot(camera.position.x - 0, camera.position.z - (-240)) < 125;
+
+  if (isNearEarth3) {
+    for (let i = 0; i < earth3NPCs.length; i++) {
+      const npc = earth3NPCs[i];
+      if (!npc.group.visible) npc.group.visible = true; // Lazy resume visibility
+
+      // Check distance to player for interactive Head / Body Tracking
+      const distToPlayer = playerGroup.position.distanceTo(npc.group.position);
+
+      if (distToPlayer < 7.5) {
+        // NPC stops walking and turns to face the approaching player warmly
+        const lookDx = playerGroup.position.x - npc.group.position.x;
+        const lookDz = playerGroup.position.z - npc.group.position.z;
+        const lookAngle = Math.atan2(lookDx, lookDz);
+        npc.group.rotation.y = THREE.MathUtils.lerp(npc.group.rotation.y, lookAngle + Math.PI, 0.08);
+
+        // Relax limbs into respectful greeting/listening pose
+        npc.lLeg.rotation.x = THREE.MathUtils.lerp(npc.lLeg.rotation.x, 0, 0.1);
+        npc.rLeg.rotation.x = THREE.MathUtils.lerp(npc.rLeg.rotation.x, 0, 0.1);
+        npc.lArm.rotation.x = THREE.MathUtils.lerp(npc.lArm.rotation.x, 0, 0.1);
+        npc.rArm.rotation.x = THREE.MathUtils.lerp(npc.rArm.rotation.x, 0, 0.1);
+
+        // Gentle breathing bob
+        npc.torso.position.y = Math.sin(time * 2.2 + npc.idlePhase) * 0.06;
+
+        // Reveal Nameplate smoothly when close (< 7.5m)
+        if (npc.nameplate) {
+          npc.nameplate.visible = true;
+          npc.nameplate.material.opacity = THREE.MathUtils.lerp(npc.nameplate.material.opacity, 1.0, 0.15);
+        }
+      } else {
+        // Hide Nameplate when far away
+        if (npc.nameplate) {
+          if (npc.nameplate.material.opacity > 0.05) {
+            npc.nameplate.material.opacity = THREE.MathUtils.lerp(npc.nameplate.material.opacity, 0.0, 0.15);
+          } else {
+            npc.nameplate.visible = false;
+          }
+        }
+
+        // Standard gentle wander patrol
+        npc.angle += delta * npc.speed * 0.2;
+        const targetX = npc.baseX + Math.cos(npc.angle) * npc.wanderRadius;
+        const targetZ = npc.baseZ + Math.sin(npc.angle) * npc.wanderRadius;
+
+        // Movement direction and facing
+        const moveDx = targetX - npc.group.position.x;
+        const moveDz = targetZ - npc.group.position.z;
+        const faceAngle = Math.atan2(moveDx, moveDz);
+
+        npc.group.position.x = targetX;
+        npc.group.position.z = targetZ;
+        npc.group.position.y = getTerrainHeightAt(targetX, targetZ);
+        npc.group.rotation.y = faceAngle + Math.PI;
+
+        // Limb swing
+        const npcWalkTime = time * 5.0 + npc.idlePhase;
+        npc.lLeg.rotation.x = Math.sin(npcWalkTime) * 0.45;
+        npc.rLeg.rotation.x = -Math.sin(npcWalkTime) * 0.45;
+        npc.lArm.rotation.x = -Math.sin(npcWalkTime) * 0.4;
+        npc.rArm.rotation.x = Math.sin(npcWalkTime) * 0.4;
+        npc.torso.position.y = Math.sin(time * 2.0 + npc.idlePhase) * 0.08;
+      }
+
+      // Role-specific dynamic animations for props & accessories
+      if (npc.specialProp) {
+        if (npc.config.classRole === 'botanist') {
+          // Drone bobbing & orbital spin
+          npc.specialProp.position.y = (5.2 + Math.sin(time * 3 + i) * 0.3) * npc.config.scale;
+          npc.specialProp.rotation.y += delta * 2.5;
+        } else if (npc.config.classRole === 'sage') {
+          // Floating gem & glowing ring rotation
+          npc.specialProp.rotation.x += delta * 3.0;
+          npc.specialProp.rotation.y += delta * 2.0;
+        } else if (npc.config.classRole === 'ranger') {
+          // Wings gentle pulse
+          npc.specialProp.children[0].rotation.z = -0.35 + Math.sin(time * 3) * 0.1;
+          npc.specialProp.children[1].rotation.z = 0.35 - Math.sin(time * 3) * 0.1;
+        } else if (npc.config.classRole === 'vanguard') {
+          // Shield gentle breathing tilt
+          npc.specialProp.rotation.y = Math.sin(time * 1.8 + i) * 0.08;
         }
       }
 
-      // Standard gentle wander patrol
-      npc.angle += delta * npc.speed * 0.2;
-      const targetX = npc.baseX + Math.cos(npc.angle) * npc.wanderRadius;
-      const targetZ = npc.baseZ + Math.sin(npc.angle) * npc.wanderRadius;
-
-      // Movement direction and facing
-      const moveDx = targetX - npc.group.position.x;
-      const moveDz = targetZ - npc.group.position.z;
-      const faceAngle = Math.atan2(moveDx, moveDz);
-
-      npc.group.position.x = targetX;
-      npc.group.position.z = targetZ;
-      npc.group.position.y = getTerrainHeightAt(targetX, targetZ);
-      npc.group.rotation.y = faceAngle + Math.PI;
-
-      // Limb swing
-      const npcWalkTime = time * 5.0 + npc.idlePhase;
-      npc.lLeg.rotation.x = Math.sin(npcWalkTime) * 0.45;
-      npc.rLeg.rotation.x = -Math.sin(npcWalkTime) * 0.45;
-      npc.lArm.rotation.x = -Math.sin(npcWalkTime) * 0.4;
-      npc.rArm.rotation.x = Math.sin(npcWalkTime) * 0.4;
-      npc.torso.position.y = Math.sin(time * 2.0 + npc.idlePhase) * 0.08;
-    }
-
-    // Role-specific dynamic animations for props & accessories
-    if (npc.specialProp) {
-      if (npc.config.classRole === 'botanist') {
-        // Drone bobbing & orbital spin
-        npc.specialProp.position.y = (5.2 + Math.sin(time * 3 + i) * 0.3) * npc.config.scale;
-        npc.specialProp.rotation.y += delta * 2.5;
-      } else if (npc.config.classRole === 'sage') {
-        // Floating gem & glowing ring rotation
-        npc.specialProp.rotation.x += delta * 3.0;
-        npc.specialProp.rotation.y += delta * 2.0;
-      } else if (npc.config.classRole === 'ranger') {
-        // Wings gentle pulse
-        npc.specialProp.children[0].rotation.z = -0.35 + Math.sin(time * 3) * 0.1;
-        npc.specialProp.children[1].rotation.z = 0.35 - Math.sin(time * 3) * 0.1;
-      } else if (npc.config.classRole === 'vanguard') {
-        // Shield gentle breathing tilt
-        npc.specialProp.rotation.y = Math.sin(time * 1.8 + i) * 0.08;
+      // Cape flutter
+      if (npc.torso.userData.cape) {
+        npc.torso.userData.cape.rotation.x = 0.12 + Math.sin(time * 4.0 + i) * 0.15;
       }
     }
-
-    // Cape flutter
-    if (npc.torso.userData.cape) {
-      npc.torso.userData.cape.rotation.x = 0.12 + Math.sin(time * 4.0 + i) * 0.15;
+  } else {
+    // Suspend off-screen distant NPC rendering to save GPU/CPU cycles
+    for (let i = 0; i < earth3NPCs.length; i++) {
+      if (earth3NPCs[i].group.visible) earth3NPCs[i].group.visible = false;
     }
   }
 
   // 🐇 Earth-3 Fauna Animations (Hopping Rabbits, Grazing Deer, Prowling Foxes)
-  for (let i = 0; i < earth3Animals.length; i++) {
-    const a = earth3Animals[i];
-    if (a.type === 'rabbit') {
-      // Rabbit Hopping Loop
-      a.angle += delta * 0.28;
-      const rx = a.baseX + Math.cos(a.angle) * a.radius;
-      const rz = a.baseZ + Math.sin(a.angle) * a.radius;
-      const groundY = getTerrainHeightAt(rx, rz);
+  // [LAZY LOADING OPTIMIZATION]: Only simulate animals when player is near Earth-3
+  if (isNearEarth3) {
+    for (let i = 0; i < earth3Animals.length; i++) {
+      const a = earth3Animals[i];
+      if (!a.group.visible) a.group.visible = true;
+      if (a.type === 'rabbit') {
+        // Rabbit Hopping Loop
+        a.angle += delta * 0.28;
+        const rx = a.baseX + Math.cos(a.angle) * a.radius;
+        const rz = a.baseZ + Math.sin(a.angle) * a.radius;
+        const groundY = getTerrainHeightAt(rx, rz);
 
-      // Parabolic jump hop
-      const hopPhase = (time * a.hopSpeed + a.hopPhase) % Math.PI;
-      const hopHeight = Math.abs(Math.sin(hopPhase)) * 1.2;
+        // Parabolic jump hop
+        const hopPhase = (time * a.hopSpeed + a.hopPhase) % Math.PI;
+        const hopHeight = Math.abs(Math.sin(hopPhase)) * 1.2;
 
-      a.group.position.set(rx, groundY + hopHeight, rz);
-      a.group.rotation.y = -a.angle + Math.PI / 2;
+        a.group.position.set(rx, groundY + hopHeight, rz);
+        a.group.rotation.y = -a.angle + Math.PI / 2;
 
-      // Twitching long ears
-      a.earL.rotation.z = -0.25 + Math.sin(time * 8 + i) * 0.15;
-      a.earR.rotation.z = 0.25 - Math.sin(time * 8 + i) * 0.15;
-    } else if (a.type === 'deer') {
-      // Graceful Deer Gait & Grazing
-      a.angle += delta * a.walkSpeed * 0.18;
-      const dx = a.baseX + Math.cos(a.angle) * a.radius;
-      const dz = a.baseZ + Math.sin(a.angle) * a.radius;
-      const groundY = getTerrainHeightAt(dx, dz);
+        // Twitching long ears
+        a.earL.rotation.z = -0.25 + Math.sin(time * 8 + i) * 0.15;
+        a.earR.rotation.z = 0.25 - Math.sin(time * 8 + i) * 0.15;
+      } else if (a.type === 'deer') {
+        // Graceful Deer Gait & Grazing
+        a.angle += delta * a.walkSpeed * 0.18;
+        const dx = a.baseX + Math.cos(a.angle) * a.radius;
+        const dz = a.baseZ + Math.sin(a.angle) * a.radius;
+        const groundY = getTerrainHeightAt(dx, dz);
 
-      a.group.position.set(dx, groundY, dz);
-      a.group.rotation.y = -a.angle + Math.PI / 2;
+        a.group.position.set(dx, groundY, dz);
+        a.group.rotation.y = -a.angle + Math.PI / 2;
 
-      // Leg step motion
-      const deerWalkTime = time * 4.0 + a.walkPhase;
-      a.legFL.rotation.x = Math.sin(deerWalkTime) * 0.35;
-      a.legBR.rotation.x = Math.sin(deerWalkTime) * 0.35;
-      a.legFR.rotation.x = -Math.sin(deerWalkTime) * 0.35;
-      a.legBL.rotation.x = -Math.sin(deerWalkTime) * 0.35;
+        // Leg step motion
+        const deerWalkTime = time * 4.0 + a.walkPhase;
+        a.legFL.rotation.x = Math.sin(deerWalkTime) * 0.35;
+        a.legBR.rotation.x = Math.sin(deerWalkTime) * 0.35;
+        a.legFR.rotation.x = -Math.sin(deerWalkTime) * 0.35;
+        a.legBL.rotation.x = -Math.sin(deerWalkTime) * 0.35;
 
-      // Gentle neck & antler head tilt (grazing)
-      a.neck.rotation.x = -0.45 + Math.sin(time * 1.5 + i) * 0.2;
-    } else if (a.type === 'fox') {
-      // Kitsune Fox Prowl & Tail Sway
-      a.angle += delta * a.speed * 0.25;
-      const fx = a.baseX + Math.cos(a.angle) * a.radius;
-      const fz = a.baseZ + Math.sin(a.angle) * a.radius;
-      const groundY = getTerrainHeightAt(fx, fz);
+        // Gentle neck & antler head tilt (grazing)
+        a.neck.rotation.x = -0.45 + Math.sin(time * 1.5 + i) * 0.2;
+      } else if (a.type === 'fox') {
+        // Kitsune Fox Prowl & Tail Sway
+        a.angle += delta * a.speed * 0.25;
+        const fx = a.baseX + Math.cos(a.angle) * a.radius;
+        const fz = a.baseZ + Math.sin(a.angle) * a.radius;
+        const groundY = getTerrainHeightAt(fx, fz);
 
-      a.group.position.set(fx, groundY, fz);
-      a.group.rotation.y = -a.angle + Math.PI / 2;
+        a.group.position.set(fx, groundY, fz);
+        a.group.rotation.y = -a.angle + Math.PI / 2;
 
-      // Majestic swaying 3 tails
-      if (a.tailsGroup) {
-        a.tailsGroup.rotation.y = Math.sin(time * 3.5 + a.phase) * 0.35;
-        a.tailsGroup.rotation.x = 0.15 + Math.sin(time * 2.0) * 0.1;
+        // Majestic swaying 3 tails
+        if (a.tailsGroup) {
+          a.tailsGroup.rotation.y = Math.sin(time * 3.5 + a.phase) * 0.35;
+          a.tailsGroup.rotation.x = 0.15 + Math.sin(time * 2.0) * 0.1;
+        }
       }
+    }
+  } else {
+    for (let i = 0; i < earth3Animals.length; i++) {
+      if (earth3Animals[i].group.visible) earth3Animals[i].group.visible = false;
     }
   }
 
@@ -3341,24 +3789,30 @@ function animate() {
   }
 
   // 🌸 Feature 3 Animation: Falling Sakura Petals & Swirling Leaves on Earth-3
+  // [LAZY LOADING OPTIMIZATION]: Only simulate Sakura Petals when player or camera is in/near Earth-3
   if (fallingPetalsMesh) {
-    const pPos = petalGeo.attributes.position.array;
-    for (let i = 0; i < petalCount; i++) {
-      const idxY = i * 3 + 1;
-      pPos[idxY] -= delta * petalSpeed[i] * 3.5;
-      // Gentle horizontal drift
-      pPos[i * 3 + 0] += Math.sin(time * 1.5 + i) * delta * 2.0;
-      pPos[i * 3 + 2] += Math.cos(time * 1.2 + i) * delta * 1.5;
+    if (isNearEarth3) {
+      if (!fallingPetalsMesh.visible) fallingPetalsMesh.visible = true;
+      const pPos = petalGeo.attributes.position.array;
+      for (let i = 0; i < petalCount; i++) {
+        const idxY = i * 3 + 1;
+        pPos[idxY] -= delta * petalSpeed[i] * 3.5;
+        // Gentle horizontal drift
+        pPos[i * 3 + 0] += Math.sin(time * 1.5 + i) * delta * 2.0;
+        pPos[i * 3 + 2] += Math.cos(time * 1.2 + i) * delta * 1.5;
 
-      // Ground respawn
-      const curGround = getTerrainHeightAt(pPos[i * 3 + 0], pPos[i * 3 + 2]);
-      if (pPos[idxY] < curGround + 0.2) {
-        pPos[idxY] = curGround + 24.0 + Math.random() * 8.0;
-        pPos[i * 3 + 0] = (Math.random() - 0.5) * 110;
-        pPos[i * 3 + 2] = -240 + (Math.random() - 0.5) * 110;
+        // Ground respawn
+        const curGround = getTerrainHeightAt(pPos[i * 3 + 0], pPos[i * 3 + 2]);
+        if (pPos[idxY] < curGround + 0.2) {
+          pPos[idxY] = curGround + 24.0 + Math.random() * 8.0;
+          pPos[i * 3 + 0] = (Math.random() - 0.5) * 110;
+          pPos[i * 3 + 2] = -240 + (Math.random() - 0.5) * 110;
+        }
       }
+      petalGeo.attributes.position.needsUpdate = true;
+    } else {
+      if (fallingPetalsMesh.visible) fallingPetalsMesh.visible = false;
     }
-    petalGeo.attributes.position.needsUpdate = true;
   }
 
   // 🐾 Feature 2 Animation: Animal Companion Follower (Rabbits / Foxes following character)
@@ -3577,14 +4031,19 @@ function switchMode(mode) {
     btnOrbit.classList.add('active');
     orbitControls.enabled = true;
     crosshair.style.display = 'none';
+    if (document.pointerLockElement) document.exitPointerLock?.();
     if (mobileControlsLayer) mobileControlsLayer.classList.remove('active');
+    if (freelookBadge) freelookBadge.classList.add('hidden');
+    isFreeLooking = false;
+    freeLookRotationY = 0;
+    freeLookPitch = 0;
     showToast('Orbit / Drone Mode: Drag mouse to inspect, Scroll to zoom');
   } else if (mode === 'walk') {
     btnWalk.classList.add('active');
     orbitControls.enabled = false;
     // Show Joystick control ONLY in Walk Mode!
     if (mobileControlsLayer) mobileControlsLayer.classList.add('active');
-    
+
     // Position character securely on terrain
     const startX = 0;
     const startZ = 15;
@@ -3595,16 +4054,34 @@ function switchMode(mode) {
     velocity.z = 0;
     playerRotationY = 0;
     playerPitch = 0;
-    
+    isFreeLooking = false;
+    freeLookRotationY = 0;
+    freeLookPitch = 0;
+    if (freelookBadge) freelookBadge.classList.add('hidden');
+
     // Position camera immediately behind player
     camera.position.set(startX, startY + 3.5, startZ + 8.5);
     camera.lookAt(startX, startY + 1.8, startZ);
-    showToast('🚶 Walk Mode: Use Joystick (Left) or WASD to Move!');
+    showToast('🚶 Walk Mode: WASD to Move | Press V for 360° Free Look (Eye View)!');
+
+    // Auto-Lock Cursor immediately on Walk click for PC (PUBG-style seamless mouse look)
+    try {
+      if (document.pointerLockElement !== canvas) {
+        canvas.requestPointerLock?.() || document.body.requestPointerLock?.();
+      }
+    } catch (err) {
+      console.log('PointerLock auto-request:', err);
+    }
   } else if (mode === 'fly') {
     btnFly.classList.add('active');
     orbitControls.enabled = false;
     crosshair.style.display = 'none';
+    if (document.pointerLockElement) document.exitPointerLock?.();
     if (mobileControlsLayer) mobileControlsLayer.classList.remove('active');
+    if (freelookBadge) freelookBadge.classList.add('hidden');
+    isFreeLooking = false;
+    freeLookRotationY = 0;
+    freeLookPitch = 0;
     showToast('🚀 Cinematic Auto-Flight Active');
   }
 }
@@ -3719,7 +4196,7 @@ btnSky.addEventListener('click', () => {
 });
 
 // Super Bloom Burst
-document.getElementById('btn-flower-burst').addEventListener('click', () => {
+document.getElementById('btn-flower-burst')?.addEventListener('click', () => {
   landmarks.forEach(lm => {
     lm.scale.set(1.2, 1.2, 1.2);
     setTimeout(() => lm.scale.set(1, 1, 1), 600);
@@ -3728,7 +4205,7 @@ document.getElementById('btn-flower-burst').addEventListener('click', () => {
 });
 
 // Macro Zoom Shortcut
-document.getElementById('btn-zoom-inspect').addEventListener('click', () => {
+document.getElementById('btn-zoom-inspect')?.addEventListener('click', () => {
   new TWEEN.Tween(camera.position)
     .to({ x: 0, y: 15, z: 6 }, 1200)
     .easing(TWEEN.Easing.Cubic.Out)
@@ -3751,7 +4228,7 @@ if (btnCode) {
   });
 }
 
-document.getElementById('drawer-close').addEventListener('click', () => {
+document.getElementById('drawer-close')?.addEventListener('click', () => {
   codeDrawer.classList.add('collapsed');
 });
 
@@ -3782,10 +4259,12 @@ export class AetheriaWorld {
 const dLines = document.getElementById('drawer-lines');
 const dCode = document.getElementById('drawer-code-content');
 const linesArr = matrixCode.split('\n');
-dLines.innerHTML = linesArr.map((_, i) => `<div>${i + 1}</div>`).join('');
-dCode.innerText = matrixCode;
+if (dLines && dCode) {
+  dLines.innerHTML = linesArr.map((_, i) => `<div>${i + 1}</div>`).join('');
+  dCode.innerText = matrixCode;
+}
 
-document.getElementById('btn-copy-script').addEventListener('click', () => {
+document.getElementById('btn-copy-script')?.addEventListener('click', () => {
   navigator.clipboard.writeText(matrixCode).then(() => {
     showToast('Aetheria World Matrix copied to clipboard! 📋');
   });
@@ -3811,9 +4290,9 @@ if (typeof gsap !== 'undefined') {
   gsap.from('.hud-top', { y: -50, opacity: 0, duration: 1.2, ease: 'power3.out' });
   gsap.from('.floating-toolbox', { x: 50, opacity: 0, duration: 1.2, delay: 0.3, ease: 'power3.out' });
   gsap.from('.hud-controls-card', { y: 60, opacity: 0, duration: 1.0, delay: 0.5, ease: 'back.out(1.7)' });
-  
+
   // Custom GSAP warp camera function to complement TWEEN
-  window.gsapWarpCamera = function(pos, look, dur = 1.8) {
+  window.gsapWarpCamera = function (pos, look, dur = 1.8) {
     gsap.to(camera.position, {
       x: pos.x, y: pos.y, z: pos.z,
       duration: dur,

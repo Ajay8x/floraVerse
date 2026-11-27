@@ -1399,6 +1399,105 @@ kbd {
   border-color: #fff;
 }
 
+/* PUBG Mobile Floating Eye Button (Mobile Only - Hidden on PC/Desktop) */
+.pubg-eye-btn {
+  display: none; /* Hidden on PC / Desktop */
+  position: absolute;
+  top: 140px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(14, 20, 36, 0.88);
+  border: 2px solid rgba(0, 240, 255, 0.6);
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(0, 240, 255, 0.2);
+  color: #00f0ff;
+  font-size: 20px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  touch-action: none;
+  z-index: 50;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.pubg-eye-btn:hover {
+  transform: scale(1.08);
+  border-color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+}
+
+.pubg-eye-btn.active {
+  background: rgba(255, 42, 109, 0.9);
+  border-color: #ffffff;
+  color: #ffffff;
+  box-shadow: 0 0 25px rgba(255, 42, 109, 0.8), inset 0 0 12px rgba(255, 255, 255, 0.5);
+  transform: scale(1.15);
+}
+
+.eye-btn-label {
+  font-size: 8.5px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-top: 1px;
+}
+
+/* Only show on touch / mobile devices (Screens <= 1024px or pointer: coarse) */
+@media (max-width: 1024px), (pointer: coarse) {
+  .pubg-eye-btn {
+    display: flex; /* Visible only on Mobile / Touch screens */
+    top: 110px;
+    right: 18px;
+    width: 52px;
+    height: 52px;
+    font-size: 19px;
+  }
+}
+
+/* Free Look (Eye Mode) 360 Indicator */
+.freelook-badge {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 16, 32, 0.92);
+  border: 1.5px solid #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.5), inset 0 0 10px rgba(0, 240, 255, 0.2);
+  padding: 8px 18px;
+  border-radius: 25px;
+  color: #00f0ff;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 1000;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.freelook-badge.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-15px);
+  pointer-events: none;
+}
+
+.eye-pulse {
+  animation: eyeGlow 1.4s infinite alternate ease-in-out;
+  color: #ff2a6d;
+}
+
+@keyframes eyeGlow {
+  0% { transform: scale(1); filter: drop-shadow(0 0 2px #ff2a6d); }
+  100% { transform: scale(1.25); filter: drop-shadow(0 0 8px #ff2a6d); }
+}
+
 /* NPC Prompt Toast (Talk Prompt) */
 .interact-prompt {
   position: absolute;

@@ -156,6 +156,12 @@
         </div>
       </div>
 
+      <!-- PUBG-Style Floating Eye Button (Mobile Only: Hold/Drag to see character's face & 360°) -->
+      <button id="btn-pubg-eye" class="pubg-eye-btn" title="Hold / Drag to see character's face & look around 360°">
+        <i class="fa-solid fa-eye"></i>
+        <span class="eye-btn-label">EYE</span>
+      </button>
+
       <!-- Right Touch Area (for looking around 360°) -->
       <div id="touch-look-zone"></div>
     </div>
@@ -164,6 +170,12 @@
     <div id="interact-prompt" class="interact-prompt">
       <span class="key-pill" id="prompt-key">E</span>
       <span id="prompt-text">Talk to Veer Vikram</span>
+    </div>
+
+    <!-- Free Look (Eye Mode) HUD Indicator -->
+    <div id="freelook-indicator" class="freelook-badge hidden">
+      <i class="fa-solid fa-eye eye-pulse"></i>
+      <span>FREE LOOK 360° (V)</span>
     </div>
 
     <!-- Cyberpunk NPC Dialogue & Quest Modal (Feature 1) -->
