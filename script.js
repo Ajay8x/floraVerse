@@ -1280,33 +1280,13 @@ function createFaunaButterflies() {
 createFaunaButterflies();
 
 // ========================================================
-// FEATURE 2: 🌊 DYNAMIC LIQUID RIPPLE LAKE (INTERACTIVE WATER)
+// FEATURE 2: 🌊 DYNAMIC LIQUID RIPPLE LAKE (REMOVED EXTRA PATCH)
 // ========================================================
 let waterMesh = null;
 const waterRipples = [];
 
 function createLiquidRippleLake() {
-  const lakeRadius = 26;
-  const count = 12000;
-  const pos = new Float32Array(count * 3);
-  const col = new Float32Array(count * 3);
-
-  const cWaterDeep = new THREE.Color(0x021b29);
-  const cWaterCyan = new THREE.Color(0x00f0ff);
-
-  for (let i = 0; i < count; i++) {
-    const r = Math.sqrt(Math.random()) * lakeRadius;
-    const th = Math.random() * Math.PI * 2;
-    pos[i * 3 + 0] = 55 + r * Math.cos(th); // Centered at Lotus Lake (55, 30)
-    pos[i * 3 + 1] = -2.6; // Water surface height
-    pos[i * 3 + 2] = 30 + r * Math.sin(th);
-
-    const c = cWaterDeep.clone().lerp(cWaterCyan, (r / lakeRadius) * 0.6);
-    col[i * 3 + 0] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
-  }
-
-  waterMesh = createPoints(pos, col, 0.32, 0.88);
-  worldGroup.add(waterMesh);
+  // Extra dark particle lake patch removed as requested
 }
 createLiquidRippleLake();
 
