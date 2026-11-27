@@ -2078,6 +2078,12 @@ function createEarth3NPC(config, baseX, baseZ) {
 
   worldGroup.add(npcGroup);
 
+  // Pick an initial random destination on Earth-3 (Radius up to 50m around center (0, -240))
+  const randAngle = Math.random() * Math.PI * 2;
+  const randDist = 10 + Math.random() * 38;
+  const initTargetX = Math.cos(randAngle) * randDist;
+  const initTargetZ = -240 + Math.sin(randAngle) * randDist;
+
   earth3NPCs.push({
     group: npcGroup,
     config,
@@ -2091,9 +2097,11 @@ function createEarth3NPC(config, baseX, baseZ) {
     nameplate,
     baseX,
     baseZ,
-    wanderRadius: 9 + Math.random() * 6,
-    speed: 0.55 + Math.random() * 0.45,
-    angle: Math.random() * Math.PI * 2,
+    speed: 5.5 + Math.random() * 3.5, // Natural jogging/walking pace in m/s
+    currentVelocity: new THREE.Vector2(0, 0),
+    targetX: initTargetX,
+    targetZ: initTargetZ,
+    pauseTimer: 0,
     idlePhase: Math.random() * 10,
     isLookingAtPlayer: false
   });
@@ -2491,6 +2499,72 @@ const dashTrailMesh = new THREE.Points(dashTrailGeo, new THREE.PointsMaterial({
 }));
 worldGroup.add(dashTrailMesh);
 let dashTrailIdx = 0;
+
+
+// ========================================================
+// 5.9 CELESTIAL CYBER PHOENIX SKY BIRDS (FLOCK FLIGHT)
+// ========================================================
+const skyBirds = [];
+const birdWingGeo = new THREE.BufferGeometry();
+// Triangular wing shape
+const wingVerts = new Float32Array([
+  0, 0, 0,   3.5, 0.4, -1.8,   0, 0, -2.2, // Left wing
+  0, 0, 0,   0, 0, -2.2,   -3.5, 0.4, -1.8  // Right wing
+]);
+birdWingGeo.setAttribute('position', new THREE.BufferAttribute(wingVerts, 3));
+birdWingGeo.computeVertexNormals();
+
+const phoenixColors = [0x00f0ff, 0xff007f, 0xffbe0b, 0x9d4edd];
+for (let b = 0; b < 6; b++) {
+  const birdGroup = new THREE.Group();
+  const bColor = phoenixColors[b % phoenixColors.length];
+  const birdMat = new THREE.MeshBasicMaterial({
+    color: bColor,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.88
+  });
+
+  const bodyMesh = new THREE.Mesh(new THREE.ConeGeometry(0.5, 3.2, 5), birdMat);
+  bodyMesh.rotation.x = Math.PI / 2;
+  birdGroup.add(bodyMesh);
+
+  // Left & Right Articulated Wings
+  const lWing = new THREE.Mesh(new THREE.BufferGeometry(), birdMat);
+  const lVerts = new Float32Array([0, 0, 0,  2.8, 0.2, -1.2,  0, 0, -1.8]);
+  lWing.geometry.setAttribute('position', new THREE.BufferAttribute(lVerts, 3));
+  lWing.position.set(0.2, 0, 0.2);
+  birdGroup.add(lWing);
+
+  const rWing = new THREE.Mesh(new THREE.BufferGeometry(), birdMat);
+  const rVerts = new Float32Array([0, 0, 0,  0, 0, -1.8,  -2.8, 0.2, -1.2]);
+  rWing.geometry.setAttribute('position', new THREE.BufferAttribute(rVerts, 3));
+  rWing.position.set(-0.2, 0, 0.2);
+  birdGroup.add(rWing);
+
+  // Glowing trail tail
+  const tailMesh = new THREE.Mesh(new THREE.BufferGeometry(), birdMat);
+  const tVerts = new Float32Array([0, 0, 0,  0.5, 0, 2.5,  -0.5, 0, 2.5]);
+  tailMesh.geometry.setAttribute('position', new THREE.BufferAttribute(tVerts, 3));
+  birdGroup.add(tailMesh);
+
+  birdGroup.scale.setScalar(1.2 + Math.random() * 0.5);
+  worldGroup.add(birdGroup);
+
+  skyBirds.push({
+    group: birdGroup,
+    lWing,
+    rWing,
+    centerOrbitX: (Math.random() - 0.5) * 60,
+    centerOrbitZ: (Math.random() - 0.5) * 60,
+    orbitRadius: 90 + b * 22,
+    altitude: 55 + Math.random() * 25,
+    speed: 0.35 + (b % 3) * 0.12,
+    angle: (b / 6) * Math.PI * 2,
+    flapSpeed: 9.0 + Math.random() * 3.0,
+    flapPhase: b * 1.5
+  });
+}
 
 // ========================================================
 // 5.8 DYNAMIC NEON GROUND STEP PARTICLES & FOOTPRINT RIPPLES (Feature 3)
@@ -3424,6 +3498,37 @@ function animate() {
     // Look at player center
     camera.lookAt(playerGroup.position.x, playerGroup.position.y + 3.2, playerGroup.position.z);
 
+    // 🚀 Jetpack Dynamic Thruster Boost Flames
+    if (flameL && flameR) {
+      const isSprinting = keys.sprint;
+      const isMoving = inputLen > 0.1;
+      const isJumping = playerGroup.position.y > groundLevel + 0.15;
+
+      let targetFlameScaleY = 0.5; // Idle low glow
+      let targetFlameScaleXZ = 0.6;
+      if (isJumping) {
+        // High boost thrust on Jump!
+        targetFlameScaleY = 2.4 + Math.sin(time * 30) * 0.4;
+        targetFlameScaleXZ = 1.6;
+      } else if (isSprinting && isMoving) {
+        // Super sprint jetpack blast
+        targetFlameScaleY = 1.9 + Math.sin(time * 25) * 0.3;
+        targetFlameScaleXZ = 1.35;
+      } else if (isMoving) {
+        // Normal walk gentle thrust
+        targetFlameScaleY = 1.1 + Math.sin(time * 18) * 0.2;
+        targetFlameScaleXZ = 1.0;
+      }
+
+      flameL.scale.y = THREE.MathUtils.lerp(flameL.scale.y, targetFlameScaleY, 0.25);
+      flameL.scale.x = THREE.MathUtils.lerp(flameL.scale.x, targetFlameScaleXZ, 0.25);
+      flameL.scale.z = flameL.scale.x;
+
+      flameR.scale.y = THREE.MathUtils.lerp(flameR.scale.y, targetFlameScaleY, 0.25);
+      flameR.scale.x = THREE.MathUtils.lerp(flameR.scale.x, targetFlameScaleXZ, 0.25);
+      flameR.scale.z = flameR.scale.x;
+    }
+
     // Realistic Character Head Tracking in Free Look (Helmet & Visor track camera view)
     if (headGroup) {
       if (isFreeLooking) {
@@ -3513,6 +3618,10 @@ function animate() {
 
     lm.rotation.y = tSin;
 
+    // 🌸 Giant Monumental Flowers Living Breathing Animation
+    const breathe = Math.sin(time * 0.8 + i) * 0.045;
+    lm.scale.set(1.0 + breathe, 1.0 + breathe * 0.8, 1.0 + breathe);
+
     const sp = lm.getObjectByName('spiral');
     if (sp) sp.rotation.y = tSpiral;
 
@@ -3526,6 +3635,34 @@ function animate() {
     if (ring) {
       ring.rotation.y = tRing;
       ring.rotation.x = tRingX;
+    }
+  }
+
+  // 🕊️ Celestial Phoenix Sky Birds Animation Loop (Graceful Flight & Wing Flapping)
+  for (let b = 0; b < skyBirds.length; b++) {
+    const bird = skyBirds[b];
+    bird.angle += delta * bird.speed * 0.5;
+    const bx = bird.centerOrbitX + Math.cos(bird.angle) * bird.orbitRadius;
+    const bz = bird.centerOrbitZ + Math.sin(bird.angle) * bird.orbitRadius;
+    const by = bird.altitude + Math.sin(time * 2.0 + bird.flapPhase) * 3.5;
+
+    bird.group.position.set(bx, by, bz);
+    // Face forward along flight tangent
+    bird.group.rotation.y = -bird.angle;
+    bird.group.rotation.z = Math.sin(time * 1.5) * 0.15; // Natural banking into turn
+
+    // Flapping wings
+    const wingFlap = Math.sin(time * bird.flapSpeed + bird.flapPhase) * 0.75;
+    bird.lWing.rotation.z = wingFlap;
+    bird.rWing.rotation.z = -wingFlap;
+  }
+
+  // ⚡ Cosmic Highway Light Stream Pulse (Bioluminescent energy traveling across planets)
+  const highwayPulse = 0.85 + Math.sin(time * 3.5) * 0.18;
+  for (let h = 0; h < highwayChunks.length; h++) {
+    const hc = highwayChunks[h];
+    if (hc.mesh.visible && hc.mesh.material) {
+      hc.mesh.material.opacity = highwayPulse;
     }
   }
 
@@ -3605,28 +3742,96 @@ function animate() {
           }
         }
 
-        // Standard gentle wander patrol
-        npc.angle += delta * npc.speed * 0.2;
-        const targetX = npc.baseX + Math.cos(npc.angle) * npc.wanderRadius;
-        const targetZ = npc.baseZ + Math.sin(npc.angle) * npc.wanderRadius;
+        // Open-World Random Navigation with Natural Boid Separation (No fixed circular orbit!)
+        if (npc.pauseTimer > 0) {
+          // Temporarily paused to admire flora or meditate
+          npc.pauseTimer -= delta;
+          npc.lLeg.rotation.x = THREE.MathUtils.lerp(npc.lLeg.rotation.x, 0, 0.1);
+          npc.rLeg.rotation.x = THREE.MathUtils.lerp(npc.rLeg.rotation.x, 0, 0.1);
+          npc.lArm.rotation.x = THREE.MathUtils.lerp(npc.lArm.rotation.x, 0, 0.1);
+          npc.rArm.rotation.x = THREE.MathUtils.lerp(npc.rArm.rotation.x, 0, 0.1);
+          npc.torso.position.y = Math.sin(time * 2.0 + npc.idlePhase) * 0.05;
+        } else {
+          let toTargetX = npc.targetX - npc.group.position.x;
+          let toTargetZ = npc.targetZ - npc.group.position.z;
+          const distToTarget = Math.hypot(toTargetX, toTargetZ);
 
-        // Movement direction and facing
-        const moveDx = targetX - npc.group.position.x;
-        const moveDz = targetZ - npc.group.position.z;
-        const faceAngle = Math.atan2(moveDx, moveDz);
+          // Arrived at destination or need a new spot -> Pick a brand new random location on Earth-3
+          if (distToTarget < 3.0) {
+            const nextAngle = Math.random() * Math.PI * 2;
+            const nextDist = 8 + Math.random() * 45; // Roam freely up to 53m from Earth-3 center
+            npc.targetX = Math.cos(nextAngle) * nextDist;
+            npc.targetZ = -240 + Math.sin(nextAngle) * nextDist;
+            npc.pauseTimer = 1.5 + Math.random() * 3.0; // Rest for 1.5 - 4.5 seconds
+          } else {
+            // Steering force towards target waypoint
+            let moveDirX = toTargetX / distToTarget;
+            let moveDirZ = toTargetZ / distToTarget;
 
-        npc.group.position.x = targetX;
-        npc.group.position.z = targetZ;
-        npc.group.position.y = getTerrainHeightAt(targetX, targetZ);
-        npc.group.rotation.y = faceAngle + Math.PI;
+            // Separation Force: Maintain safe social distance (at least 9-11 meters) between each NPC!
+            const minSeparationDist = 10.0;
+            for (let j = 0; j < earth3NPCs.length; j++) {
+              if (i === j) continue;
+              const other = earth3NPCs[j];
+              const sepDx = npc.group.position.x - other.group.position.x;
+              const sepDz = npc.group.position.z - other.group.position.z;
+              const sepDist = Math.hypot(sepDx, sepDz);
+              if (sepDist < minSeparationDist && sepDist > 0.001) {
+                // Strong repulsion push away from other NPC to prevent clustering or collisions
+                const repelStrength = (minSeparationDist - sepDist) / minSeparationDist;
+                moveDirX += (sepDx / sepDist) * repelStrength * 1.8;
+                moveDirZ += (sepDz / sepDist) * repelStrength * 1.8;
+              }
+            }
 
-        // Limb swing
-        const npcWalkTime = time * 5.0 + npc.idlePhase;
-        npc.lLeg.rotation.x = Math.sin(npcWalkTime) * 0.45;
-        npc.rLeg.rotation.x = -Math.sin(npcWalkTime) * 0.45;
-        npc.lArm.rotation.x = -Math.sin(npcWalkTime) * 0.4;
-        npc.rArm.rotation.x = Math.sin(npcWalkTime) * 0.4;
-        npc.torso.position.y = Math.sin(time * 2.0 + npc.idlePhase) * 0.08;
+            // Also keep comfortable distance from player when not interacting
+            const pSepDx = npc.group.position.x - playerGroup.position.x;
+            const pSepDz = npc.group.position.z - playerGroup.position.z;
+            const pSepDist = Math.hypot(pSepDx, pSepDz);
+            if (pSepDist < 9.0 && pSepDist > 0.001) {
+              const pRepel = (9.0 - pSepDist) / 9.0;
+              moveDirX += (pSepDx / pSepDist) * pRepel * 1.5;
+              moveDirZ += (pSepDz / pSepDist) * pRepel * 1.5;
+            }
+
+            // Normalize final steering vector
+            const finalLen = Math.hypot(moveDirX, moveDirZ);
+            if (finalLen > 0.001) {
+              moveDirX /= finalLen;
+              moveDirZ /= finalLen;
+            }
+
+            // Smoothly update position
+            const moveSpeed = npc.speed * delta;
+            const nextX = npc.group.position.x + moveDirX * moveSpeed;
+            const nextZ = npc.group.position.z + moveDirZ * moveSpeed;
+
+            // Keep within Earth-3 boundary (Radius < 54m from (0, -240))
+            const distFromCenter = Math.hypot(nextX - 0, nextZ - (-240));
+            if (distFromCenter < 54) {
+              npc.group.position.x = nextX;
+              npc.group.position.z = nextZ;
+            } else {
+              // Steer back towards center if near perimeter
+              npc.targetX = (Math.random() - 0.5) * 30;
+              npc.targetZ = -240 + (Math.random() - 0.5) * 30;
+            }
+
+            npc.group.position.y = getTerrainHeightAt(npc.group.position.x, npc.group.position.z);
+
+            // Natural smooth body facing towards moving direction
+            const moveAngle = Math.atan2(moveDirX, moveDirZ);
+            npc.group.rotation.y = THREE.MathUtils.lerp(npc.group.rotation.y, moveAngle + Math.PI, 0.12);
+
+            // Natural rhythmic leg swing and arm movement while traveling
+            const npcWalkTime = time * 7.5 + npc.idlePhase;
+            npc.lLeg.rotation.x = Math.sin(npcWalkTime) * 0.65;
+            npc.rLeg.rotation.x = -Math.sin(npcWalkTime) * 0.65;
+            npc.lArm.rotation.x = -Math.sin(npcWalkTime) * 0.55;
+            npc.rArm.rotation.x = Math.sin(npcWalkTime) * 0.55;
+            npc.torso.position.y = Math.abs(Math.sin(npcWalkTime * 2)) * 0.12;
+          }
+        }
       }
 
       // Role-specific dynamic animations for props & accessories
