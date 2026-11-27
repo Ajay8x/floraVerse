@@ -1224,8 +1224,9 @@ function spawnMultiversePortal(x, z, realmId, realmName, realmColorHex, destX, d
   landmarks.push(g);
 }
 
-// 3 Connected Multiverse Outer Realms
+// 4 Connected Multiverse Outer Realms (4 Portals in all 4 Directions/Quadrants)
 spawnMultiversePortal(200, 160, 'realm_plasma', '⚡ Neo-Plasma Multiverse Frontier', 0x00f0ff, 0, 15);
+spawnMultiversePortal(-200, 160, 'realm_emerald', '🌿 Emerald Quantum Abyss', 0x05ffa1, 0, -15);
 spawnMultiversePortal(-220, -180, 'realm_astral', '🌸 Astral Sakura Expanse', 0xff2a6d, -50, 40);
 spawnMultiversePortal(240, -210, 'realm_solaris', '☀️ Solaris Golden Nebula', 0xffbe0b, 65, -50);
 
